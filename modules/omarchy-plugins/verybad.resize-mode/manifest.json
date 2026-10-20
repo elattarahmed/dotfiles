@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "verybad.resize-mode",
+  "name": "Resize mode",
+  "version": "1.0.0",
+  "author": "verybad",
+  "description": "Shows when the SUPER + R resize mode is on; click to toggle it, scroll to resize",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Resize mode",
+    "description": "Shows when the SUPER + R resize mode is on; click to toggle it, scroll to resize",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {}
+  }
+}

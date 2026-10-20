@@ -1,5 +1,5 @@
 # Omarchy shell plugins and bar layout.
-# Items: clipboard (history with pins + bar button), emojis, scale-button, sysstats, bar-layout
+# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout
 
 # install_plugin ID [placement...]: copy the plugin, then enable it. A plugin
 # the shell keeps loaded (the clipboard picker) only picks up new code after
@@ -19,7 +19,7 @@ install_plugin() {
 
 module_omarchy_plugins() {
   local any=0 item
-  for item in clipboard emojis scale-button sysstats bar-layout; do selected "$item" && any=1; done
+  for item in clipboard emojis scale-button resize-mode sysstats bar-layout; do selected "$item" && any=1; done
   ((any)) && info "Barre et plugins Omarchy"
 
   # Each new widget goes first in the right section: the order ends up
@@ -47,6 +47,13 @@ module_omarchy_plugins() {
     install_plugin verybad.display-scale --section right --index 0
   else
     disable_plugin verybad.display-scale
+  fi
+
+  # Goes first too: whichport, resize, scale, clipboard, sysstats
+  if selected resize-mode; then
+    install_plugin verybad.resize-mode --section right --index 0
+  else
+    disable_plugin verybad.resize-mode
   fi
 
   if selected emojis; then

@@ -19,7 +19,7 @@ ITEMS=(
   "ghostty|on|Ghostty comme terminal par défaut"
   "ghostty-font|on|Ghostty · texte en taille 11 au lieu de 9"
   "ghostty-tabs|on|Ghostty · Alt+T nouvel onglet · Alt+W fermer l'onglet"
-  "resize-mode|on|Super+R puis flèches · redimensionner la fenêtre au clavier"
+  "resize-mode|on|Super+R puis flèches · redimensionner la fenêtre au clavier · indicateur RESIZE dans la barre"
   "workspace-keys|on|Super+Ctrl+←/→ · workspace précédent/suivant"
   "macos-keys|on|Alt comme Cmd sur Mac · Alt+C/V/X · Alt+A/Z/S/F/T/W/L/R · Alt+1…9 · Super+Q · Ctrl+Alt+Espace émojis"
   "natural-scroll|on|Pavé tactile · défilement naturel (comme sur Mac) et plus lent"

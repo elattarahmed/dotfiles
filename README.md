@@ -35,7 +35,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `touchscreen-off` | ✓ | écran tactile désactivé (son nom est détecté avec `hyprctl devices`) |
 | `caps-lock` | ✓ | Verr. Maj redevient un vrai Verr. Maj (é → É, ç → Ç…) ; la touche Compose passe sur Ctrl droit |
 | `gestures` | ✓ | glisser à 3 doigts ←/→ pour changer de workspace |
-| `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile |
+| `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile. Pendant le verrouillage et l'économiseur d'écran, le zoom revient à la normale, puis se remet au retour (service `zoom-lock-guard`) |
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |

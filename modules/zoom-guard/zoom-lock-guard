@@ -1,0 +1,52 @@
+#!/bin/bash
+# Resets the screen zoom while the session is locked or the screensaver runs,
+# and puts it back when you return.
+#
+# Hyprland has no lock event, so two streams act as triggers: Omarchy shell's
+# "omarchy lock/idle" log lines and Hyprland's window open/close events (the
+# screensaver is a window). On each trigger the real state is read back from
+# `omarchy-shell lock isLocked` and the window list, so a changed log format
+# can only delay a reset, never get it wrong.
+
+set -uo pipefail
+
+SCREENSAVER_CLASS=org.omarchy.screensaver
+saved=""   # zoom to restore, set while the screen is hidden
+
+zoom() { hyprctl getoption cursor:zoom_factor -j | jq -r '.float'; }
+set_zoom() { hyprctl eval "hl.config({ cursor = { zoom_factor = $1 } })" >/dev/null; }
+
+hidden() {
+  [[ $(omarchy-shell lock isLocked 2>/dev/null) == true ]] && return 0
+  hyprctl clients -j 2>/dev/null | jq -e --arg c "$SCREENSAVER_CLASS" 'any(.[]; .class == $c)' >/dev/null
+}
+
+check() {
+  if hidden; then
+    [[ -n $saved ]] && return
+    saved=$(zoom)
+    awk -v z="$saved" 'BEGIN { exit !(z > 1) }' && set_zoom 1
+  elif [[ -n $saved ]]; then
+    # Don't override a zoom changed while hidden (e.g. reset by hand)
+    if awk -v z="$saved" -v now="$(zoom)" 'BEGIN { exit !(z > 1 && now == 1) }'; then
+      set_zoom "$saved"
+    fi
+    saved=""
+  fi
+}
+
+socket="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+
+check
+{
+  journalctl --user -f -n 0 -o cat --grep 'omarchy (lock|idle) ' &
+  socat -U - "UNIX-CONNECT:$socket" | grep --line-buffered -E '^(openwindow|closewindow)>>' &
+  wait
+} | while read -r _; do
+  # A lock writes a burst of lines: handle them as one trigger
+  while read -r -t 0.3 _; do :; done
+  check
+  # The screensaver window maps a moment after its log line
+  sleep 1
+  check
+done

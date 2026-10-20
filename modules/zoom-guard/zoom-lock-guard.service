@@ -1,0 +1,12 @@
+[Unit]
+Description=Reset the screen zoom while locked or on the screensaver, restore it after
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/zoom-lock-guard
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

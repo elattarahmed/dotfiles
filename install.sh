@@ -24,7 +24,7 @@ ITEMS=(
   "touchscreen-off|on|Écran tactile désactivé"
   "caps-lock|on|Verr. Maj en vrai Verr. Maj (É È Ç À Ù) · Compose sur Ctrl droit"
   "gestures|on|Glisser à 3 doigts ←/→ · changer de workspace"
-  "zoom|on|Zoom façon macOS · clic à 3 doigts puis glisser ↑/↓"
+  "zoom|on|Zoom façon macOS · clic à 3 doigts puis glisser ↑/↓ · remis à zéro pendant le verrouillage"
   "workspace-animation|on|Animation de glissement entre les workspaces"
   "no-middle-paste|on|Le clic du milieu (tap à 3 doigts) ne colle plus la sélection"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
@@ -42,7 +42,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme zsh ghostty hyprland omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
+MODULES=(theme zsh ghostty hyprland zoom-guard omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 TODOS=()

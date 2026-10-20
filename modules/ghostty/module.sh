@@ -1,6 +1,6 @@
 # Ghostty as the default terminal, with its shortcuts in included files so
 # Omarchy's own ~/.config/ghostty/config stays as shipped.
-# Items: ghostty, ghostty-tabs (and the terminal half of zsh-selection)
+# Items: ghostty, ghostty-tabs, ghostty-font (and the terminal half of zsh-selection)
 
 module_ghostty() {
   local dir="$DOTFILES_DIR/modules/ghostty"
@@ -24,9 +24,10 @@ module_ghostty() {
   ensure_block "$config" "config-file = ?dotfiles/tabs.conf" "# Shortcuts from the dotfiles repo (./install.sh --disable ghostty-tabs to drop one)
 config-file = ?dotfiles/tabs.conf
 config-file = ?dotfiles/selection.conf"
+  ensure_block "$config" "config-file = ?dotfiles/font.conf" "config-file = ?dotfiles/font.conf"
 
   local feature item
-  for feature in tabs:ghostty-tabs selection:zsh-selection; do
+  for feature in tabs:ghostty-tabs selection:zsh-selection font:ghostty-font; do
     item=${feature#*:}
     feature=${feature%%:*}
     if selected "$item"; then

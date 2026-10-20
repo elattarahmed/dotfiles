@@ -4,6 +4,7 @@
 # item|feature file|comment in dotfiles.lua
 HYPR_FEATURES=(
   "workspace-keys|workspace_keys|SUPER + CTRL + LEFT/RIGHT: previous/next workspace"
+  "resize-mode|resize_mode|SUPER + R, then arrows: resize the active window"
   "macos-keys|macos_keys|ALT as Cmd: Alt+C/V/X, Alt+A/Z/S/F/T/W/L/R, Alt+1..9, SUPER + Q, CTRL + ALT + SPACE emojis"
   "clipboard|clipboard_keys|ALT + SHIFT + V: clipboard history with pins"
   "gestures|gestures|3-finger swipe left/right: switch workspace"
@@ -93,7 +94,7 @@ EOF
 
   # The same customizations written straight into Omarchy's files would run twice
   local found
-  found=$(grep -lE '\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"' \
+  found=$(grep -lE '\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"|"Resize mode"' \
     "$hypr"/{bindings,input,looknfeel,hyprland}.lua 2>/dev/null || true)
   if [[ -n $found ]]; then
     warn "ces fichiers contiennent déjà certains de ces réglages, en double avec hypr/dotfiles/ :"

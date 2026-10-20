@@ -28,7 +28,9 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `zsh-selection` | ✓ | sélection au clavier dans zsh, comme dans un éditeur |
 | `zsh-root` | | même shell et même config pour root |
 | `ghostty` | ✓ | Ghostty comme terminal par défaut |
+| `ghostty-font` | ✓ | texte du terminal en taille 11 au lieu de 9 (Ctrl+= / Ctrl+- / Ctrl+0 changent la taille d'une fenêtre) |
 | `ghostty-tabs` | ✓ | onglets avec Alt+T / Alt+W |
+| `resize-mode` | ✓ | Super+R puis flèches : redimensionne la fenêtre active comme en tirant son coin bas-droit (Maj = plus vite), Échap pour finir |
 | `workspace-keys` | ✓ | Super+Ctrl+←/→ pour changer de workspace |
 | `macos-keys` | ✓ | Alt joue le rôle de Cmd sur Mac |
 | `natural-scroll` | ✓ | défilement naturel au pavé tactile, comme sur Mac (le contenu suit les doigts), et plus lent (0.25 au lieu de 0.4) |

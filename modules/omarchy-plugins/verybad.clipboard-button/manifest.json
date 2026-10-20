@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "verybad.clipboard-button",
+  "name": "Clipboard button",
+  "version": "1.0.0",
+  "author": "verybad",
+  "description": "Opens the clipboard history; tooltip lists pinned items",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Clipboard",
+    "description": "Opens the clipboard history; tooltip lists pinned items",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {}
+  }
+}

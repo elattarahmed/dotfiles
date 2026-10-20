@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "elattarahmed.whichport",
+  "name": "whichport",
+  "version": "1.0.0",
+  "author": "elattarahmed",
+  "description": "Dev servers listening on this machine, from whichport",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "omarchy/BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "whichport",
+    "description": "Dev servers listening on this machine, from whichport",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": { "command": "whichport", "interval": 3000, "hideWhenEmpty": true }
+  }
+}

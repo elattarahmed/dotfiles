@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "verybad.display-scale",
+  "name": "Display scale",
+  "version": "1.0.0",
+  "author": "verybad",
+  "description": "Shows the screen scale; scroll or click to make everything bigger or smaller",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Display scale",
+    "description": "Shows the screen scale; scroll or click to make everything bigger or smaller",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {}
+  }
+}

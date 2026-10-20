@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "verybad.sysstats",
+  "name": "System stats",
+  "version": "1.0.0",
+  "author": "verybad",
+  "description": "RAM, CPU and temperature, cycled on click",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "System stats",
+    "description": "RAM, CPU and temperature, cycled on click",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": { "mode": "ram", "interval": 2000 }
+  }
+}

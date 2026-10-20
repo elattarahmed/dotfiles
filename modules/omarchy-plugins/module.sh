@@ -1,0 +1,69 @@
+# Omarchy shell plugins and bar layout.
+# Items: clipboard (history with pins + bar button), emojis, scale-button, sysstats, bar-layout
+
+# install_plugin ID [placement...]: copy the plugin, then enable it. A plugin
+# the shell keeps loaded (the clipboard picker) only picks up new code after
+# a shell restart.
+install_plugin() {
+  local id=$1
+  shift
+  local src="$DOTFILES_DIR/modules/omarchy-plugins/$id" dest="$HOME/.config/omarchy/plugins/$id"
+  local changed=0
+  [[ -d $dest ]] && ! diff -rq "$src" "$dest" >/dev/null 2>&1 && changed=1
+  install_dir "$src" "$dest"
+  enable_plugin "$id" "$@"
+  if ((changed)) && grep -q '"keepLoaded": true' "$src/manifest.json"; then
+    RESTART_SHELL=1
+  fi
+}
+
+module_omarchy_plugins() {
+  local any=0 item
+  for item in clipboard emojis scale-button sysstats bar-layout; do selected "$item" && any=1; done
+  ((any)) && info "Barre et plugins Omarchy"
+
+  # Each new widget goes first in the right section: the order ends up
+  # whichport, clipboard, sysstats (whichport's module runs after this one).
+  if selected sysstats; then
+    install_plugin verybad.sysstats --section right --index 0
+  else
+    disable_plugin verybad.sysstats
+  fi
+
+  if selected clipboard; then
+    # A clone of omarchy.clipboard: enabling it replaces the built-in picker
+    install_plugin verybad.clipboard
+    install_plugin verybad.clipboard-button --section right --index 0
+  else
+    disable_plugin verybad.clipboard-button
+    if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "verybad.clipboard" and .enabled)' >/dev/null; then
+      # Removing a clone switches back to Omarchy's own clipboard picker
+      omarchy plugin remove verybad.clipboard --yes >/dev/null && ok "historique du presse-papiers d'Omarchy rétabli"
+    fi
+  fi
+
+  # Goes first too: whichport, scale, clipboard, sysstats
+  if selected scale-button; then
+    install_plugin verybad.display-scale --section right --index 0
+  else
+    disable_plugin verybad.display-scale
+  fi
+
+  if selected emojis; then
+    # A clone of omarchy.emojis: its shortcuts (SUPER + CTRL + E, CTRL + ALT +
+    # SPACE) open the clone once it is enabled
+    install_plugin verybad.emojis
+  elif is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "verybad.emojis" and .enabled)' >/dev/null; then
+    omarchy plugin remove verybad.emojis --yes >/dev/null && ok "sélecteur d'émojis d'Omarchy rétabli"
+  fi
+
+  if selected bar-layout && is_live; then
+    omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
+    omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
+    ok "disposition de la barre"
+  fi
+
+  if ((${RESTART_SHELL:-0})) && is_live; then
+    omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré" || true
+  fi
+}

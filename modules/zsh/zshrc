@@ -1,0 +1,182 @@
+# Powerlevel10k instant prompt — keep at the very top. Anything that needs
+# console input (passwords, [y/n] prompts) must go above this block.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Features from the dotfiles repo, turned on/off in ~/.config/zsh/dotfiles.zsh
+[[ -r ~/.config/zsh/dotfiles.zsh ]] && source ~/.config/zsh/dotfiles.zsh
+: ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1}
+
+# Omarchy environment (OMARCHY_PATH + PATH)
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+: "${OMARCHY_PATH:=/usr/share/omarchy}"
+
+# Omarchy envs (EDITOR, BROWSER, MANPAGER...), aliases and functions — POSIX-compatible, safe in zsh
+source "$OMARCHY_PATH/default/bash/envs"
+source "$OMARCHY_PATH/default/bash/aliases"
+for f in "$OMARCHY_PATH"/default/bash/fns/*(N); do source "$f"; done
+
+# History
+HISTFILE=~/.zsh_history
+HISTSIZE=32768
+SAVEHIST=$HISTSIZE
+setopt append_history share_history hist_ignore_dups hist_ignore_space hist_reduce_blanks extended_history
+
+# General options
+setopt auto_cd interactive_comments no_beep
+
+# Completion
+fpath=(/usr/share/zsh/site-functions $fpath)
+autoload -Uz compinit && compinit -d ~/.cache/zcompdump
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'   # case-insensitive
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# Keybindings (emacs mode, arrows search history by prefix like Omarchy's bash)
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+
+# Start/end of the whole command (used by Alt+Up/Down and Alt+Shift+Up/Down)
+_cursor-to-buffer-start() { CURSOR=0 }
+_cursor-to-buffer-end()   { CURSOR=${#BUFFER} }
+zle -N _cursor-to-buffer-start
+zle -N _cursor-to-buffer-end
+
+if (( DOTFILES_ZSH_LINE_KEYS )); then
+  # Word deletion stops at / . - _ etc. (like bash/most editors)
+  WORDCHARS=''
+  bindkey '^H'      backward-kill-word   # Ctrl+Backspace
+  bindkey '^[^H'    backward-kill-word   # Ctrl+Backspace (some terminals)
+  bindkey '^[[3;5~' kill-word            # Ctrl+Delete
+  bindkey '^[^?'    backward-kill-line   # Alt+Backspace
+  bindkey '^[[3;3~' kill-line            # Alt+Delete
+
+  # Alt+Left/Right: start/end of current line
+  bindkey '^[[1;3D' beginning-of-line
+  bindkey '^[^[[D'  beginning-of-line
+  bindkey '^[[1;3C' end-of-line
+  bindkey '^[^[[C'  end-of-line
+
+  # Alt+Up/Down: start/end of the whole command (useful for multi-line commands)
+  bindkey '^[[1;3A' _cursor-to-buffer-start
+  bindkey '^[^[[A'  _cursor-to-buffer-start
+  bindkey '^[[1;3B' _cursor-to-buffer-end
+  bindkey '^[^[[B'  _cursor-to-buffer-end
+fi
+
+if (( DOTFILES_ZSH_SELECTION )); then
+  # Text selection, editor-style: Shift (+Ctrl/Alt) + arrows select, typing or
+  # pasting replaces the selection, Backspace/Delete delete it.
+  _cursor-line-up()   { zle up-line   || CURSOR=0 }
+  _cursor-line-down() { zle down-line || CURSOR=${#BUFFER} }
+  zle -N _cursor-line-up
+  zle -N _cursor-line-down
+
+  _select-move() {
+    (( REGION_ACTIVE )) || { MARK=$CURSOR; REGION_ACTIVE=1 }
+    zle ${WIDGET##*select-}   # ##* also strips zsh-autosuggestions' wrapper prefix
+  }
+  _deselect-move() {
+    REGION_ACTIVE=0
+    zle ${WIDGET##*deselect-}
+  }
+  _select-all() { MARK=0; CURSOR=${#BUFFER}; REGION_ACTIVE=1 }
+  zle -N _select-all
+
+  # key sequence -> movement widget (Shift adds ;2, Alt+Shift ;4, Ctrl+Shift ;6)
+  typeset -A _select_keys=(
+    '^[[1;2D' backward-char        '^[[1;2C' forward-char
+    '^[[1;2A' _cursor-line-up      '^[[1;2B' _cursor-line-down
+    '^[[1;2H' beginning-of-line    '^[[1;2F' end-of-line
+    '^[[1;6D' backward-word        '^[[1;6C' forward-word
+    '^[[1;6A' _cursor-line-up      '^[[1;6B' _cursor-line-down
+    '^[[1;4D' beginning-of-line    '^[[1;4C' end-of-line
+    '^[[1;4A' _cursor-to-buffer-start '^[[1;4B' _cursor-to-buffer-end
+  )
+  for key widget in ${(kv)_select_keys}; do
+    zle -N select-$widget _select-move
+    bindkey $key select-$widget
+  done
+
+  # Plain movement drops the selection
+  for key in '^[[D' '^[[C' '^[[A' '^[[B' '^[[H' '^[[F' '^[[1;5D' '^[[1;5C' \
+             '^[[1;3D' '^[[1;3C' '^[[1;3A' '^[[1;3B' '^[^[[D' '^[^[[C' '^[^[[A' '^[^[[B'; do
+    widget=${${(z)"$(bindkey $key)"}[-1]}
+    [[ $widget == deselect-* ]] && continue
+    zle -N deselect-$widget _deselect-move
+    bindkey $key deselect-$widget
+  done
+  unset key widget
+
+  _region-self-insert() { (( REGION_ACTIVE )) && { zle kill-region; REGION_ACTIVE=0 }; zle .$WIDGET }
+  _region-delete()      { if (( REGION_ACTIVE )); then zle kill-region; REGION_ACTIVE=0; else zle .$WIDGET; fi }
+  zle -N self-insert _region-self-insert
+  zle -N bracketed-paste _region-self-insert
+  zle -N backward-delete-char _region-delete
+  zle -N delete-char _region-delete
+
+  # Clipboard: Alt+C / Alt+X (sent by Hyprland + Ghostty when nothing is selected
+  # with the mouse) copy / cut the selection to the system clipboard.
+  _region-text() {
+    local s=$(( MARK < CURSOR ? MARK : CURSOR )) e=$(( MARK > CURSOR ? MARK : CURSOR ))
+    print -rn -- "${BUFFER[s+1,e]}"
+  }
+  _region-copy() { (( REGION_ACTIVE )) && _region-text | wl-copy }
+  _region-cut()  { (( REGION_ACTIVE )) && { _region-text | wl-copy; zle kill-region; REGION_ACTIVE=0 } }
+  zle -N _region-copy
+  zle -N _region-cut
+  bindkey '^[a'      _select-all    # Alt+A
+  bindkey '^[[2;5~'  _region-copy   # Ctrl+Insert
+  bindkey '^[x'      _region-cut    # Alt+X
+fi
+
+# Insert key variants that reach zsh (e.g. a simulated Shift+Insert paste while
+# Alt is still held) would otherwise insert a stray "~": ignore them. The
+# terminal itself still handles Shift+Insert as paste.
+_ignore-key() { }
+zle -N _ignore-key
+for key in '^[[2~' '^[[2;2~' '^[[2;3~' '^[[2;4~' '^[[2;6~' '^[[2;7~' '^[[2;8~'; do
+  bindkey $key _ignore-key
+done
+unset key
+
+# Tools (same as Omarchy's bash init)
+command -v mise &>/dev/null && eval "$(mise activate zsh)"
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
+command -v fzf &>/dev/null && source <(fzf --zsh)
+# Alt+C copies the selection (overrides fzf's cd widget)
+(( DOTFILES_ZSH_SELECTION )) && bindkey '^[c' _region-copy
+
+# Prompt: Powerlevel10k (run `p10k configure` to change the style), or
+# Omarchy's starship when Powerlevel10k isn't installed
+if [[ -r /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme ]]; then
+  source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
+  [[ -r ~/.p10k.zsh ]] && source ~/.p10k.zsh
+elif [[ ${TERM:-} != dumb ]] && command -v starship &>/dev/null; then
+  eval "$(starship init zsh)"
+fi
+
+# Plugins (install with: sudo pacman -S zsh-autosuggestions zsh-syntax-highlighting zsh-completions)
+[[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
+  source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+# Our arrow keys run deselect-* wrappers: Right/End/Alt+Right accept the whole
+# suggestion, Ctrl+Right accepts the next word.
+ZSH_AUTOSUGGEST_ACCEPT_WIDGETS+=(deselect-forward-char deselect-end-of-line)
+ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(deselect-forward-word)
+# syntax-highlighting must be sourced last
+[[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
+  source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Your own exports, aliases and functions go in ~/.zshrc.local, which this
+# repo never overwrites.
+[[ -r ~/.zshrc.local ]] && source ~/.zshrc.local

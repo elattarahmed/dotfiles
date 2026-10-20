@@ -9,6 +9,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
+  "theme|on|Thème Omarchy Hackerman"
   "zsh|on|zsh par défaut · Powerlevel10k · suggestions et coloration syntaxique"
   "zsh-line-keys|on|zsh · Ctrl/Alt + Effacer/Suppr et Alt + flèches (début/fin de ligne)"
   "zsh-selection|on|zsh · sélection avec Maj + flèches · Alt+A/C/X tout sélectionner/copier/couper"
@@ -34,11 +35,12 @@ ITEMS=(
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"
+  "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
   "display-scale|off|Échelle de l'écran (demande la valeur · 1.25 sur ce portable 2880×1800)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(zsh ghostty hyprland omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh display)
+MODULES=(theme zsh ghostty hyprland omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 TODOS=()

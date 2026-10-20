@@ -20,6 +20,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
+| `theme` | ✓ | thème Omarchy Hackerman (terminal, barre, écran de verrouillage, fond d'écran) |
 | `zsh` | ✓ | zsh comme shell par défaut, prompt Powerlevel10k, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
 | `zsh-line-keys` | ✓ | Ctrl/Alt + Effacer/Suppr, Alt + ←/→/↑/↓ |
 | `zsh-selection` | ✓ | sélection au clavier dans zsh, comme dans un éditeur |
@@ -45,7 +46,8 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
-| `display-scale` | | échelle de l'écran (le script demande la valeur) |
+| `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur (ton Mac) ; le pare-feu n'ouvre le port 22 qu'au réseau local |
+| `display-scale` | | échelle de l'écran (le script demande la valeur ; 1.25 sur ce portable). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
 
 `./install.sh --list` affiche la même liste.
 

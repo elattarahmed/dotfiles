@@ -1,12 +1,13 @@
-# Powerlevel10k instant prompt — keep at the very top. Anything that needs
+# Features from the dotfiles repo, turned on/off in ~/.config/zsh/dotfiles.zsh
+# (only variables: safe above the instant prompt)
+[[ -r ~/.config/zsh/dotfiles.zsh ]] && source ~/.config/zsh/dotfiles.zsh
+: ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1} ${DOTFILES_ZSH_P10K:=1}
+
+# Powerlevel10k instant prompt — keep near the top. Anything that needs
 # console input (passwords, [y/n] prompts) must go above this block.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+if (( DOTFILES_ZSH_P10K )) && [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
-
-# Features from the dotfiles repo, turned on/off in ~/.config/zsh/dotfiles.zsh
-[[ -r ~/.config/zsh/dotfiles.zsh ]] && source ~/.config/zsh/dotfiles.zsh
-: ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1}
 
 # Omarchy environment (OMARCHY_PATH + PATH)
 [[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
@@ -157,9 +158,11 @@ command -v fzf &>/dev/null && source <(fzf --zsh)
 # Alt+C copies the selection (overrides fzf's cd widget)
 (( DOTFILES_ZSH_SELECTION )) && bindkey '^[c' _region-copy
 
-# Prompt: Powerlevel10k (run `p10k configure` to change the style), or
-# Omarchy's starship when Powerlevel10k isn't installed
-if [[ -r /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme ]]; then
+# Prompt: Powerlevel10k, or Omarchy's starship when it is turned off or not
+# installed. Without ~/.p10k.zsh, Powerlevel10k starts its `p10k configure`
+# wizard, which checks which icons this terminal can show; run it again any
+# time to change the style.
+if (( DOTFILES_ZSH_P10K )) && [[ -r /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme ]]; then
   source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
   [[ -r ~/.p10k.zsh ]] && source ~/.p10k.zsh
 elif [[ ${TERM:-} != dumb ]] && command -v starship &>/dev/null; then

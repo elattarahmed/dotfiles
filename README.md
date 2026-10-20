@@ -21,7 +21,9 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
 | `theme` | ✓ | thème Omarchy Hackerman (terminal, barre, écran de verrouillage, fond d'écran) |
-| `zsh` | ✓ | zsh comme shell par défaut, prompt Powerlevel10k, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
+| `zsh` | ✓ | zsh comme shell par défaut, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
+| `zsh-p10k` | ✓ | prompt Powerlevel10k. Au premier lancement, son assistant teste les icônes que ton terminal sait afficher et te fait choisir ton style (`p10k configure` pour le refaire). Décoché : le prompt starship d'Omarchy |
+| `zsh-p10k-mine` | | reprend exactement mon style de prompt (`modules/zsh/p10k.zsh`) au lieu de l'assistant ; il faut une police Nerd Font |
 | `zsh-line-keys` | ✓ | Ctrl/Alt + Effacer/Suppr, Alt + ←/→/↑/↓ |
 | `zsh-selection` | ✓ | sélection au clavier dans zsh, comme dans un éditeur |
 | `zsh-root` | | même shell et même config pour root |
@@ -129,7 +131,7 @@ Le prochain `./install.sh` réécrit ces fichiers d'après tes choix enregistré
 
 | Dans le dépôt | Sur la machine |
 |---|---|
-| `modules/zsh/zshrc`, `p10k.zsh` | `~/.zshrc`, `~/.p10k.zsh`. Tes ajouts perso vont dans `~/.zshrc.local`, que le script ne touche jamais |
+| `modules/zsh/zshrc`, `p10k.zsh` | `~/.zshrc`, et `~/.p10k.zsh` seulement avec `zsh-p10k-mine` (sinon un `~/.p10k.zsh` existant est gardé). Tes ajouts perso vont dans `~/.zshrc.local`, que le script ne touche jamais |
 | `modules/ghostty/*.conf` | `~/.config/ghostty/dotfiles/`, inclus depuis `~/.config/ghostty/config` |
 | `modules/hyprland/features/*.lua` | `~/.config/hypr/dotfiles/`, chargés par `~/.config/hypr/dotfiles.lua` |
 | `modules/omarchy-plugins/*`, `modules/whichport/plugin` | `~/.config/omarchy/plugins/` |

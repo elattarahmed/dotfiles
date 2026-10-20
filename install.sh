@@ -10,7 +10,9 @@ source "$DOTFILES_DIR/lib/common.sh"
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
   "theme|on|Thème Omarchy Hackerman"
-  "zsh|on|zsh par défaut · Powerlevel10k · suggestions et coloration syntaxique"
+  "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
+  "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
+  "zsh-p10k-mine|off|zsh · mon style de prompt Powerlevel10k tel quel (demande une police avec icônes Nerd Font)"
   "zsh-line-keys|on|zsh · Ctrl/Alt + Effacer/Suppr et Alt + flèches (début/fin de ligne)"
   "zsh-selection|on|zsh · sélection avec Maj + flèches · Alt+A/C/X tout sélectionner/copier/couper"
   "zsh-root|off|zsh et la même config pour root (sudo)"
@@ -91,6 +93,9 @@ saved_selection() {
     IFS='|' read -r id default _ <<<"$item"
     [[ $default == on ]] && echo "$id"
   done
+  # The last item may be off: don't let its failed test become the return
+  # value, or `set -e` drops the items given on the command line
+  return 0
 }
 
 menu() {

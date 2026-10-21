@@ -10,6 +10,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
   "theme|on|Thème Omarchy Hackerman"
+  "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
   "zsh-p10k-mine|off|zsh · mon style de prompt Powerlevel10k tel quel (demande une police avec icônes Nerd Font)"
@@ -44,7 +45,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme zsh ghostty hyprland zoom-guard omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 TODOS=()

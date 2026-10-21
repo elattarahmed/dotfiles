@@ -21,6 +21,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
 | `theme` | ✓ | thème Omarchy Hackerman (terminal, barre, écran de verrouillage, fond d'écran) |
+| `browser-brave` | ✓ | Brave comme navigateur par défaut (installé s'il manque) : un lien s'ouvre dans un nouvel onglet du Brave déjà ouvert |
 | `zsh` | ✓ | zsh comme shell par défaut, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
 | `zsh-p10k` | ✓ | prompt Powerlevel10k. Au premier lancement, son assistant teste les icônes que ton terminal sait afficher et te fait choisir ton style (`p10k configure` pour le refaire). Décoché : le prompt starship d'Omarchy |
 | `zsh-p10k-mine` | | reprend exactement mon style de prompt (`modules/zsh/p10k.zsh`) au lieu de l'assistant ; il faut une police Nerd Font |

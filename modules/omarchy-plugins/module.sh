@@ -37,7 +37,9 @@ module_omarchy_plugins() {
   else
     disable_plugin dotfiles.clipboard-button
     if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "dotfiles.clipboard" and .enabled)' >/dev/null; then
-      # Removing a clone switches back to Omarchy's own clipboard picker
+      # Removing a clone switches back to Omarchy's own clipboard picker, which
+      # saves the history again without the pins: keep a copy that has them
+      backup "$HOME/.local/state/omarchy/clipboard-history.json"
       omarchy plugin remove dotfiles.clipboard --yes >/dev/null && ok "historique du presse-papiers d'Omarchy rétabli"
     fi
   fi

@@ -103,7 +103,7 @@ Dans un terminal, ces touches Alt arrivent telles quelles à zsh, qui a ses prop
 | Alt+A, Alt+B… | remettre dans le presse-papiers l'élément épinglé à cette lettre |
 | Alt+1…9 | remettre dans le presse-papiers l'un des 9 derniers éléments |
 
-Les éléments épinglés restent en haut de la liste et gardent leur lettre. Ils ne sont jamais effacés automatiquement, même quand on vide l'historique (Suppr les supprime un par un).
+Les éléments épinglés restent en haut de la liste et gardent leur lettre. Désactiver `clipboard` les perd (le gestionnaire d'Omarchy ne connaît pas les épingles) : le script garde avant une copie de l'historique dans ses sauvegardes. Ils ne sont jamais effacés automatiquement, même quand on vide l'historique (Suppr les supprime un par un).
 
 **zsh et Ghostty**
 

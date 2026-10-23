@@ -42,6 +42,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
 | `screensaver` | ✓ | l'économiseur affiche « V3ry_B4d » au lieu d'« Omarchy », en huit styles figlet qui tournent, un par effet |
+| `plymouth` | ✓ | écran de démarrage (celui du mot de passe du disque) aux couleurs Matte Black. Demande le mot de passe sudo |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
@@ -51,6 +52,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `no-fcitx` | ✓ | désactive fcitx5 : sinon, dans Ghostty, Maj+flèches affiche un C ou un D au lieu de sélectionner. Les accents à touche morte (^ ¨) et la touche Compose sont gérés par les applis elles-mêmes |
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
+| `neovim-neotree` | ✓ | explorateur de fichiers neo-tree dans Neovim (extra LazyVim) |
 | `rust` | ✓ | Rust stable par rustup (`omarchy install dev-env rust`) avec clippy, rustfmt, rust-analyzer, rust-src et la doc hors ligne (`rustup doc --std`), [Rustlings](https://github.com/rust-lang/rustlings), et l'extra Rust de LazyVim (rustaceanvim, crates.nvim, débogueur codelldb installé par Mason au premier lancement) |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
 | `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur (ton Mac) ; le pare-feu n'ouvre le port 22 qu'au réseau local |

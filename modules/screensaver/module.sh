@@ -1,4 +1,4 @@
-# Screensaver text: "V3ry_B4d" in two styles that take turns, one per effect.
+# Screensaver text: "V3ry_B4d" in eight figlet styles that take turns, one per effect.
 # Item: screensaver
 
 module_screensaver() {

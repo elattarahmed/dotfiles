@@ -41,7 +41,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile. Pendant le verrouillage et l'économiseur d'écran, le zoom revient à la normale, puis se remet au retour (service `zoom-lock-guard`) |
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
-| `screensaver` | ✓ | l'économiseur affiche « V3ry_B4d » au lieu d'« Omarchy », en deux styles qui alternent à chaque effet |
+| `screensaver` | ✓ | l'économiseur affiche « V3ry_B4d » au lieu d'« Omarchy », en huit styles figlet qui tournent, un par effet |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |

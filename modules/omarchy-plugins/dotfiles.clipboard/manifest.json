@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "id": "verybad.clipboard",
-  "name": "My Clipboard",
+  "id": "dotfiles.clipboard",
+  "name": "Clipboard with pins",
   "version": "1.0.0",
   "author": "Omarchy",
   "description": "A clipboard manager to view and paste history",

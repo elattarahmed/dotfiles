@@ -11,7 +11,7 @@ import qs.Ui
 // survives a reboot.
 BarWidget {
   id: root
-  moduleName: "verybad.display-scale"
+  moduleName: "dotfiles.display-scale"
 
   property real scale: 0
 

@@ -3,7 +3,7 @@
 #   git clone git@github-<alias>:owner/repo.git
 # Item: git-ssh
 
-DEFAULT_GIT_ACCOUNTS="hmd oc"
+DEFAULT_GIT_ACCOUNTS="perso pro"
 
 module_git_ssh() {
   selected git-ssh || return 0

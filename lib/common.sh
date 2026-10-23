@@ -7,6 +7,10 @@ BACKUP_DIR="$DOTFILES_STATE/backups/$(date +%Y%m%d-%H%M%S)"
 # to the running Hyprland/Omarchy session. Used for tests and dry runs.
 FILES_ONLY=${FILES_ONLY:-0}
 ASSUME_YES=${ASSUME_YES:-0}
+# LINK=1 puts links to the repo's files instead of copies (install.sh --link),
+# so editing them on the machine edits the repo. Systemd units and files the
+# modules generate stay copies.
+LINK=${LINK:-0}
 
 info() { printf '\n\033[1;34m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
 ok() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
@@ -60,21 +64,49 @@ backup() {
   cp -a "$target" "$dest"
 }
 
-# install_file SRC DEST [MODE]: copy unless already identical, backing up the old file.
+# Whether SRC should be linked rather than copied
+links_to_repo() {
+  local src=$1 dest=$2
+  ((LINK)) && [[ $src == "$DOTFILES_DIR"/* && $dest != *.service ]]
+}
+
+# link SRC DEST: DEST becomes a link to SRC, backing up what it replaces.
+link() {
+  local src=$1 dest=$2
+  [[ -L $dest && $(readlink "$dest") == "$src" ]] && return 0
+  backup "$dest"
+  rm -rf "$dest"
+  mkdir -p "$(dirname "$dest")"
+  ln -s "$src" "$dest"
+  ok "$(pretty "$dest") → dépôt"
+}
+
+# install_file SRC DEST [MODE]: copy (or link, see LINK) unless already
+# identical, backing up the old file.
 install_file() {
   local src=$1 dest=$2 mode=${3:-644}
-  if [[ -f $dest ]] && cmp -s "$src" "$dest"; then
+  if links_to_repo "$src" "$dest"; then
+    link "$src" "$dest"
+    return
+  fi
+  if [[ -f $dest && ! -L $dest ]] && cmp -s "$src" "$dest"; then
     return 0
   fi
   backup "$dest"
+  rm -f "$dest"
   install -Dm"$mode" "$src" "$dest"
   ok "$(pretty "$dest")"
 }
 
-# install_dir SRC DEST: replace DEST with a copy of SRC unless already identical.
+# install_dir SRC DEST: replace DEST with a copy (or link) of SRC unless
+# already identical.
 install_dir() {
   local src=$1 dest=$2
-  if [[ -d $dest ]] && diff -rq "$src" "$dest" >/dev/null 2>&1; then
+  if links_to_repo "$src" "$dest"; then
+    link "$src" "$dest"
+    return
+  fi
+  if [[ -d $dest && ! -L $dest ]] && diff -rq "$src" "$dest" >/dev/null 2>&1; then
     return 0
   fi
   backup "$dest"

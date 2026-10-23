@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "verybad.sysstats",
+  "id": "dotfiles.sysstats",
   "name": "System stats",
   "version": "1.0.0",
-  "author": "verybad",
+  "author": "dotfiles",
   "description": "RAM, CPU and temperature, cycled on click",
   "kinds": [
     "bar-widget"

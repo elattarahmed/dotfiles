@@ -9,7 +9,7 @@ import qs.Ui
 // tooltip always shows all three.
 BarWidget {
   id: root
-  moduleName: "verybad.sysstats"
+  moduleName: "dotfiles.sysstats"
 
   readonly property var modes: ["ram", "cpu", "temp"]
   property string mode: setting("mode", "ram")

@@ -9,11 +9,11 @@ source "$DOTFILES_DIR/lib/common.sh"
 
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
-  "theme|on|Thème Black_arch (et Hermarchy installé) avec mon fond d'écran"
+  "theme|on|Thème Black_arch (et Hermarchy installé) avec un fond d'écran en plus"
   "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
-  "zsh-p10k-mine|off|zsh · mon style de prompt Powerlevel10k tel quel (demande une police avec icônes Nerd Font)"
+  "zsh-p10k-style|off|zsh · le style de prompt Powerlevel10k du dépôt tel quel (demande une police avec icônes Nerd Font)"
   "zsh-line-keys|on|zsh · Ctrl/Alt + Effacer/Suppr et Alt + flèches (début/fin de ligne)"
   "zsh-selection|on|zsh · sélection avec Maj + flèches · Alt+A/C/X tout sélectionner/copier/couper"
   "zsh-root|off|zsh et la même config pour root (sudo)"
@@ -31,27 +31,29 @@ ITEMS=(
   "workspace-animation|on|Animation de glissement entre les workspaces"
   "no-middle-paste|on|Le clic du milieu (tap à 3 doigts) ne colle plus la sélection"
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
-  "screensaver|on|Économiseur d'écran · « V3ry_B4d » en huit styles qui tournent"
+  "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
   "scale-button|on|Barre · taille de l'affichage (molette ou clic pour agrandir/réduire)"
   "sysstats|on|Barre · RAM / CPU / température (clic pour passer de l'un à l'autre)"
-  "whichport|on|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
+  "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
+  "apps|on|Applications en terminal · tree · glow (Markdown) · pacseek (recherche de paquets)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
   "neovim-neotree|on|Neovim · explorateur de fichiers neo-tree (extra LazyVim)"
   "rust|on|Rust · rustup stable avec clippy/rustfmt/rust-analyzer · Rustlings · LazyVim Rust"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"
   "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
-  "display-scale|off|Échelle de l'écran (demande la valeur · 1.6 sur ce portable 2880×1800)"
+  "display-scale|off|Échelle de l'écran (demande la valeur)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim rust git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim rust apps git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
+MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"
 TODOS=()
 SELECTED=()
 EXPLICIT=()
@@ -69,6 +71,9 @@ ou ceux par défaut la première fois).
   --yes, -y         sans menu ni question (garde les choix enregistrés)
   --files-only      copie les fichiers seulement : pas de paquets, pas de sudo,
                     rien d'envoyé à la session en cours
+  --link            met des liens vers le dépôt au lieu de copies : modifier
+                    ces fichiers sur la machine modifie le dépôt (retenu)
+  --copy            revient aux copies (retenu)
   --list            liste les éléments
   --help, -h        cette aide
 
@@ -133,11 +138,14 @@ menu() {
 mode=install
 args=()
 all=0
+link_choice=""
 while (($#)); do
   case "$1" in
     --all) all=1 ;;
     --yes | -y) ASSUME_YES=1 ;;
     --files-only) FILES_ONLY=1 ;;
+    --link) LINK=1; link_choice=link ;;
+    --copy) LINK=0; link_choice=copy ;;
     --disable) mode=disable ;;
     --list)
       for item in "${ITEMS[@]}"; do
@@ -159,6 +167,11 @@ done
 if ! command -v omarchy >/dev/null || ! command -v hyprctl >/dev/null; then
   warn "Omarchy n'a pas été trouvé : ces dotfiles sont faits pour Omarchy (Arch + Hyprland)."
   ((FILES_ONLY)) || confirm "Continuer quand même ?" no || exit 1
+fi
+
+# Links or copies: the last choice made with --link/--copy, copies otherwise
+if [[ -z $link_choice && $(cat "$MODE_FILE" 2>/dev/null) == link ]]; then
+  LINK=1
 fi
 
 if [[ $mode == disable ]]; then
@@ -184,6 +197,7 @@ for module in "${MODULES[@]}"; do
 done
 
 mkdir -p "$(dirname "$SELECTION_FILE")"
+[[ -n $link_choice ]] && echo "$link_choice" >"$MODE_FILE"
 {
   echo "# Éléments installés par $(pretty "$DOTFILES_DIR")/install.sh (un par ligne)"
   printf '%s\n' "${SELECTED[@]}"

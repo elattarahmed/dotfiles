@@ -1,14 +1,14 @@
 # dotfiles
 
-Ma config [Omarchy](https://omarchy.org/) (Arch Linux + Hyprland), réinstallable sur une autre machine avec un seul script. Chaque élément s'active ou se désactive séparément, raccourcis clavier compris.
+Une config [Omarchy](https://omarchy.org/) (Arch Linux + Hyprland) prête à copier : un seul script la pose sur n'importe quelle machine Omarchy. Chaque élément s'active ou se désactive séparément, raccourcis clavier compris.
 
 ## Installation
 
 Sur une machine où Omarchy est déjà installé :
 
 ```bash
-git clone https://github.com/elattarahmed/dotfiles.git ~/Documents/GIT/dotfiles
-cd ~/Documents/GIT/dotfiles
+git clone <adresse de ce dépôt> ~/dotfiles
+cd ~/dotfiles
 ./install.sh
 ```
 
@@ -20,11 +20,11 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
-| `theme` | ✓ | thème [Black_arch](https://github.com/ankur311sudo/black_arch) avec mon fond d'écran (terminal, barre, écran de verrouillage). [Hermarchy](https://github.com/archer-clawbot/omarchy-hermarchy-theme) est installé aussi, à choisir dans le menu des thèmes |
+| `theme` | ✓ | thème [Black_arch](https://github.com/ankur311sudo/black_arch) avec un fond d'écran en plus, dans `modules/theme/backgrounds/` (terminal, barre, écran de verrouillage). [Hermarchy](https://github.com/archer-clawbot/omarchy-hermarchy-theme) est installé aussi, à choisir dans le menu des thèmes |
 | `browser-brave` | ✓ | Brave comme navigateur par défaut (installé s'il manque) : un lien s'ouvre dans un nouvel onglet du Brave déjà ouvert |
 | `zsh` | ✓ | zsh comme shell par défaut, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
 | `zsh-p10k` | ✓ | prompt Powerlevel10k. Au premier lancement, son assistant teste les icônes que ton terminal sait afficher et te fait choisir ton style (`p10k configure` pour le refaire). Décoché : le prompt starship d'Omarchy |
-| `zsh-p10k-mine` | | reprend exactement mon style de prompt (`modules/zsh/p10k.zsh`) au lieu de l'assistant ; il faut une police Nerd Font |
+| `zsh-p10k-style` | | reprend tel quel le style de prompt du dépôt (`modules/zsh/p10k.zsh`) au lieu de l'assistant ; il faut une police Nerd Font |
 | `zsh-line-keys` | ✓ | Ctrl/Alt + Effacer/Suppr, Alt + ←/→/↑/↓ |
 | `zsh-selection` | ✓ | sélection au clavier dans zsh, comme dans un éditeur |
 | `zsh-root` | | même shell et même config pour root |
@@ -41,22 +41,23 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile. Pendant le verrouillage et l'économiseur d'écran, le zoom revient à la normale, puis se remet au retour (service `zoom-lock-guard`) |
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
-| `screensaver` | ✓ | l'économiseur affiche « V3ry_B4d » au lieu d'« Omarchy », en huit styles figlet qui tournent, un par effet |
+| `screensaver` | ✓ | l'économiseur affiche ton texte au lieu du logo Omarchy, dessiné dans huit polices ASCII qui tournent, une par effet. Le script demande le texte ; `screensaver-text` le change ensuite (voir plus bas) |
 | `plymouth` | ✓ | écran de démarrage (celui du mot de passe du disque) aux couleurs Matte Black. Demande le mot de passe sudo |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |
-| `whichport` | ✓ | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
+| `whichport` | | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
 | `bar-layout` | ✓ | barre transparente, langue du clavier avant l'horloge, icônes d'applis après le réseau |
 | `no-fcitx` | ✓ | désactive fcitx5 : sinon, dans Ghostty, Maj+flèches affiche un C ou un D au lieu de sélectionner. Les accents à touche morte (^ ¨) et la touche Compose sont gérés par les applis elles-mêmes |
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
 | `neovim-neotree` | ✓ | explorateur de fichiers neo-tree dans Neovim (extra LazyVim) |
+| `apps` | ✓ | applications en terminal : `tree` (arborescence d'un dossier), `glow` (Markdown mis en forme), `pacseek` (chercher et installer des paquets, AUR compris) |
 | `rust` | ✓ | Rust stable par rustup (`omarchy install dev-env rust`) avec clippy, rustfmt, rust-analyzer, rust-src et la doc hors ligne (`rustup doc --std`), [Rustlings](https://github.com/rust-lang/rustlings), et l'extra Rust de LazyVim (rustaceanvim, crates.nvim, débogueur codelldb installé par Mason au premier lancement) |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
-| `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur (ton Mac) ; le pare-feu n'ouvre le port 22 qu'au réseau local |
-| `display-scale` | | échelle de l'écran (le script demande la valeur ; 1.6 sur ce portable). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
+| `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur ; le pare-feu n'ouvre le port 22 qu'au réseau local |
+| `display-scale` | | échelle de l'écran (le script demande la valeur). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
 
 `./install.sh --list` affiche la même liste.
 
@@ -124,6 +125,7 @@ Les éléments épinglés restent en haut de la liste et gardent leur lettre. Il
 ./install.sh --disable macos-keys    # en retirer
 ./install.sh --yes                   # tout réappliquer sans question
 ./install.sh --files-only            # copier les fichiers seulement : ni paquets, ni sudo, ni session
+./install.sh --link                  # des liens vers le dépôt au lieu de copies (voir plus bas)
 ```
 
 Tes choix sont enregistrés dans `~/.config/dotfiles/selection`. Pour couper un réglage à la main, sans relancer le script :
@@ -138,18 +140,34 @@ Le prochain `./install.sh` réécrit ces fichiers d'après tes choix enregistré
 
 | Dans le dépôt | Sur la machine |
 |---|---|
-| `modules/zsh/zshrc`, `p10k.zsh` | `~/.zshrc`, et `~/.p10k.zsh` seulement avec `zsh-p10k-mine` (sinon un `~/.p10k.zsh` existant est gardé). Tes ajouts perso vont dans `~/.zshrc.local`, que le script ne touche jamais |
+| `modules/zsh/zshrc`, `p10k.zsh` | `~/.zshrc`, et `~/.p10k.zsh` seulement avec `zsh-p10k-style` (sinon un `~/.p10k.zsh` existant est gardé). Tes ajouts perso vont dans `~/.zshrc.local`, que le script ne touche jamais |
 | `modules/ghostty/*.conf` | `~/.config/ghostty/dotfiles/`, inclus depuis `~/.config/ghostty/config` |
 | `modules/hyprland/features/*.lua` | `~/.config/hypr/dotfiles/`, chargés par `~/.config/hypr/dotfiles.lua` |
 | `modules/omarchy-plugins/*`, `modules/whichport/plugin` | `~/.config/omarchy/plugins/` |
-| `modules/screensaver/texts/*.txt` | `~/.config/omarchy/branding/screensaver.d/`. Le service `screensaver-rotate` les fait tourner dans `screensaver.txt`, un par effet et dans l'ordre des noms : ajoute ou retire un fichier pour changer la rotation |
+| `modules/screensaver/` | `~/.local/bin/screensaver-text`, `screensaver-rotate` et une police complétée dans `~/.local/share/dotfiles/figlet/`. Les textes dessinés vont dans `~/.config/omarchy/branding/screensaver.d/` |
 | *(généré)* | `~/.config/fcitx5/profile`, une ligne dans `~/.config/nvim/lua/config/options.lua` |
+
+## Économiseur d'écran (`screensaver`)
+
+`screensaver-text` dessine ton texte dans chaque police de la rotation, avec [figlet](http://www.figlet.org/). Le service `screensaver-rotate` montre une police par effet. Le texte et la liste des polices sont dans `~/.config/dotfiles/screensaver.conf`, sur ta machine : jamais dans le dépôt.
+
+```bash
+screensaver-text                          # texte, polices et taille de chaque rendu
+screensaver-text set "Bonjour"            # change le texte, redessine tout
+screensaver-text add Bloody "Doom"        # ajoute des polices (screensaver-text fonts pour la liste)
+screensaver-text remove 3 Basic           # retire par numéro ou par nom
+screensaver-text only "ANSI Shadow@grand" # ne garde que celles-là
+screensaver-text reset                    # les huit polices par défaut
+screensaver-text preview Doom --text "Essai"   # aperçu dans le terminal, sans rien changer
+```
+
+Deux modificateurs s'ajoutent au nom d'une police : `@grand` dessine des lettres deux fois plus hautes, pour les polices en blocs comme ANSI Shadow, et `@large` évite que figlet resserre les lettres. Une police plus large que l'écran est écartée. Une lettre absente de la police laisse un trou : l'outil le signale.
 
 Les fichiers Hyprland d'Omarchy (`bindings.lua`, `input.lua`, `looknfeel.lua`…) ne sont pas modifiés, à une ligne près : `require("hypr.dotfiles")` dans `hyprland.lua`. La config de Ghostty et les options de Neovim reçoivent seulement quelques lignes à la fin. Les mises à jour d'Omarchy continuent donc de s'appliquer.
 
 ## Plusieurs comptes GitHub (`git-ssh`)
 
-Le script demande un alias par compte (par défaut `hmd` et `oc`), puis pour chacun un nom et un email. Il crée ensuite :
+Le script demande un alias par compte (par défaut `perso` et `pro`), puis pour chacun un nom et un email. Il crée ensuite :
 
 - une clé SSH par compte, `~/.ssh/id_ed25519_<alias>` ;
 - un hôte `github-<alias>` dans `~/.ssh/config` ;
@@ -158,9 +176,9 @@ Le script demande un alias par compte (par défaut `hmd` et `oc`), puis pour cha
 Il ne te reste qu'à coller chaque clé publique (`cat ~/.ssh/id_ed25519_<alias>.pub`) dans le bon compte GitHub : **Settings → SSH and GPG keys**. Ensuite :
 
 ```bash
-ssh -T github-hmd                                  # → « Hi <compte> ! »
-git clone git@github-hmd:elattarahmed/whichport.git
-git remote set-url origin git@github-oc:<org>/<repo>.git   # pour un repo déjà cloné
+ssh -T github-perso                                    # → « Hi <compte> ! »
+git clone git@github-perso:<compte>/<repo>.git
+git remote set-url origin git@github-pro:<org>/<repo>.git   # pour un repo déjà cloné
 ```
 
 Un repo cloné sans alias n'a pas d'identité : git refuse de commiter plutôt que d'en deviner une.
@@ -168,8 +186,8 @@ Un repo cloné sans alias n'a pas d'identité : git refuse de commiter plutôt q
 ## Ce qui n'est pas dans le dépôt
 
 - **Les clés SSH privées**, jamais. Le script en génère de nouvelles sur chaque machine.
+- **Ce qui te concerne :** le texte de l'économiseur, tes noms et emails git, la connexion à `gh` (`gh auth login`).
 - **L'historique du presse-papiers**, l'historique zsh, les réglages de Chromium.
-- **Le thème** : c'est celui par défaut d'Omarchy (Tokyo Night).
 
 ## Migrer une machine déjà configurée
 
@@ -182,16 +200,22 @@ omarchy refresh config hypr/looknfeel.lua
 omarchy refresh config hypr/hyprland.lua
 omarchy refresh config ghostty/config
 rm ~/.config/hypr/zoom.lua
-./install.sh --yes
+./install.sh --yes            # ou --link (voir plus bas)
 ```
 
 L'échelle de l'écran reste dans `hypr/monitors.lua`, qu'il n'y a pas besoin de toucher.
 
+## Modifier sa config directement dans le dépôt (`--link`)
+
+Par défaut, le script copie les fichiers. Avec `./install.sh --link`, il met à la place des liens vers le dépôt : modifier `~/.config/hypr/dotfiles/zoom.lua`, `~/.zshrc` ou un plugin de la barre modifie le dépôt, et il ne reste qu'à commiter. Le choix est retenu pour les prochaines fois ; `./install.sh --copy` revient aux copies.
+
+Ce qui reste copié : les services systemd, et les fichiers que le script génère (`hypr/dotfiles.lua`, `zsh/dotfiles.zsh`, les textes de l'économiseur…). Après avoir modifié un plugin de la barre, recharge-le avec `omarchy-shell shell rescanPlugins` (`omarchy restart shell` pour le presse-papiers et les émojis, que le shell garde en mémoire).
+
 ## Garder le dépôt à jour
 
-Quand tu changes quelque chose sur ta machine, mets le changement dans le dépôt, relance `./install.sh --yes`, puis commite. Pour un nouveau réglage :
+Quand tu changes quelque chose sur ta machine, mets le changement dans le dépôt (avec `--link`, c'est déjà fait pour les fichiers existants), relance `./install.sh --yes`, puis commite. Pour un nouveau réglage :
 
 - **Hyprland :** un fichier dans `modules/hyprland/features/` qui renvoie `function(settings) … end`, plus une ligne dans `HYPR_FEATURES` (`modules/hyprland/module.sh`) et dans `ITEMS` (`install.sh`).
 - **Autre chose :** une fonction `module_<nom>` dans `modules/<nom>/module.sh`, ajoutée à `MODULES` dans `install.sh`.
 
-Les plugins `verybad.clipboard` et `verybad.emojis` sont des copies modifiées du gestionnaire de presse-papiers et du sélecteur d'émojis d'Omarchy (licence MIT). Ils ne suivent donc pas les mises à jour des originaux.
+Les plugins `dotfiles.clipboard` et `dotfiles.emojis` sont des copies modifiées du gestionnaire de presse-papiers et du sélecteur d'émojis d'Omarchy (licence MIT). Ils ne suivent donc pas les mises à jour des originaux.

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "verybad.clipboard-button",
+  "id": "dotfiles.clipboard-button",
   "name": "Clipboard button",
   "version": "1.0.0",
-  "author": "verybad",
+  "author": "dotfiles",
   "description": "Opens the clipboard history; tooltip lists pinned items",
   "kinds": [
     "bar-widget"

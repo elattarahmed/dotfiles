@@ -25,43 +25,43 @@ module_omarchy_plugins() {
   # Each new widget goes first in the right section: the order ends up
   # whichport, clipboard, sysstats (whichport's module runs after this one).
   if selected sysstats; then
-    install_plugin verybad.sysstats --section right --index 0
+    install_plugin dotfiles.sysstats --section right --index 0
   else
-    disable_plugin verybad.sysstats
+    disable_plugin dotfiles.sysstats
   fi
 
   if selected clipboard; then
     # A clone of omarchy.clipboard: enabling it replaces the built-in picker
-    install_plugin verybad.clipboard
-    install_plugin verybad.clipboard-button --section right --index 0
+    install_plugin dotfiles.clipboard
+    install_plugin dotfiles.clipboard-button --section right --index 0
   else
-    disable_plugin verybad.clipboard-button
-    if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "verybad.clipboard" and .enabled)' >/dev/null; then
+    disable_plugin dotfiles.clipboard-button
+    if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "dotfiles.clipboard" and .enabled)' >/dev/null; then
       # Removing a clone switches back to Omarchy's own clipboard picker
-      omarchy plugin remove verybad.clipboard --yes >/dev/null && ok "historique du presse-papiers d'Omarchy rétabli"
+      omarchy plugin remove dotfiles.clipboard --yes >/dev/null && ok "historique du presse-papiers d'Omarchy rétabli"
     fi
   fi
 
   # Goes first too: whichport, scale, clipboard, sysstats
   if selected scale-button; then
-    install_plugin verybad.display-scale --section right --index 0
+    install_plugin dotfiles.display-scale --section right --index 0
   else
-    disable_plugin verybad.display-scale
+    disable_plugin dotfiles.display-scale
   fi
 
   # Goes first too: whichport, resize, scale, clipboard, sysstats
   if selected resize-mode; then
-    install_plugin verybad.resize-mode --section right --index 0
+    install_plugin dotfiles.resize-mode --section right --index 0
   else
-    disable_plugin verybad.resize-mode
+    disable_plugin dotfiles.resize-mode
   fi
 
   if selected emojis; then
     # A clone of omarchy.emojis: its shortcuts (SUPER + CTRL + E, CTRL + ALT +
     # SPACE) open the clone once it is enabled
-    install_plugin verybad.emojis
-  elif is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "verybad.emojis" and .enabled)' >/dev/null; then
-    omarchy plugin remove verybad.emojis --yes >/dev/null && ok "sélecteur d'émojis d'Omarchy rétabli"
+    install_plugin dotfiles.emojis
+  elif is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "dotfiles.emojis" and .enabled)' >/dev/null; then
+    omarchy plugin remove dotfiles.emojis --yes >/dev/null && ok "sélecteur d'émojis d'Omarchy rétabli"
   fi
 
   if selected bar-layout && is_live; then

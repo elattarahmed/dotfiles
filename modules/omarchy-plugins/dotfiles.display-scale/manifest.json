@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "verybad.display-scale",
+  "id": "dotfiles.display-scale",
   "name": "Display scale",
   "version": "1.0.0",
-  "author": "verybad",
+  "author": "dotfiles",
   "description": "Shows the screen scale; scroll or click to make everything bigger or smaller",
   "kinds": [
     "bar-widget"

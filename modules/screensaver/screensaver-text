@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""Text and fonts of the Omarchy screensaver.
+
+The screensaver shows ~/.config/omarchy/branding/screensaver.txt; the
+screensaver-rotate service swaps in the next file of screensaver.d/ after
+every effect. This tool writes those files: the same text drawn in every font
+of the rotation, with figlet.
+
+Settings live in ~/.config/dotfiles/screensaver.conf (text, then one font per
+line). A font name can end with a modifier:
+  @large  full width: figlet doesn't squeeze letters together
+  @grand  letters twice as tall and 1.5x as wide (block fonts: █ and box lines)
+"""
+
+import collections
+import difflib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+HOME = Path.home()
+CONFIG = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config")) / "dotfiles" / "screensaver.conf"
+BRANDING = Path(os.environ.get("XDG_CONFIG_HOME", HOME / ".config")) / "omarchy" / "branding"
+OUTPUT = BRANDING / "screensaver.d"
+FONT_DIRS = [
+    Path(os.environ.get("XDG_DATA_HOME", HOME / ".local" / "share")) / "dotfiles" / "figlet",
+    Path("/usr/share/figlet/fonts"),
+    Path("/usr/share/figlet"),
+]
+
+DEFAULT_TEXT = "Omarchy"
+DEFAULT_FONTS = [
+    "Delta Corps Priest 1@large",
+    "ANSI Shadow@grand",
+    "ANSI Regular@grand",
+    "3D-ASCII",
+    "Big Money-ne",
+    "Nancyj-Improved",
+    "DOS Rebel",
+    "Basic",
+]
+MODIFIERS = ("large", "grand")
+
+# The screensaver terminal uses an 18 pt font; one column is about 0.83 px per
+# point of logical (scaled) screen width, so ~14.9 px.
+COLUMN_PX = 0.827 * 18
+
+# Shadow cells @grand can't learn from the font's own letters (rare shapes),
+# for fonts that draw a shadow (ANSI Shadow)
+SHADOW_OVERRIDES = {"001100100": "╗"}
+
+USAGE = """\
+Usage : screensaver-text [commande]
+
+  (sans commande)        texte, polices de la rotation et leur taille
+  set TEXTE              change le texte et redessine toutes les polices
+  add POLICE...          ajoute des polices à la fin de la rotation
+  remove POLICE|N...     retire des polices (par nom ou par numéro)
+  only POLICE|N...       ne garde que ces polices
+  reset                  remet les polices par défaut (garde le texte)
+  fonts [MOTIF]          liste les polices figlet installées
+  preview [POLICE...]    affiche le rendu sans rien changer (--text "..." pour essayer un autre texte)
+  generate               redessine tout depuis la config
+
+Modificateurs, à coller au nom : "ANSI Shadow@grand" (lettres agrandies),
+"Delta Corps Priest 1@large" (lettres non resserrées).
+Config : {config}
+"""
+
+
+def fail(message):
+    print(f"screensaver-text : {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ---- settings ---------------------------------------------------------------
+
+def load():
+    text, fonts = DEFAULT_TEXT, None
+    if CONFIG.exists():
+        fonts = []
+        for line in CONFIG.read_text(encoding="utf-8").splitlines():
+            key, _, value = line.partition(":")
+            if line.lstrip().startswith("#") or not _:
+                continue
+            if key.strip() == "text":
+                text = value.strip()
+            elif key.strip() == "font" and value.strip():
+                fonts.append(value.strip())
+    return text, (DEFAULT_FONTS[:] if fonts is None else fonts)
+
+
+def save(text, fonts):
+    CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    body = ["# Screensaver text and fonts, in rotation order. Managed by",
+            "# screensaver-text (see screensaver-text --help); editing by hand works too.",
+            f"text: {text}"]
+    body += [f"font: {font}" for font in fonts]
+    CONFIG.write_text("\n".join(body) + "\n", encoding="utf-8")
+
+
+# ---- fonts ------------------------------------------------------------------
+
+def installed_fonts():
+    """{lowercase name: (name, path)}, first font dir wins."""
+    found = {}
+    for directory in FONT_DIRS:
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.glob("*.flf")):
+            found.setdefault(path.stem.lower(), (path.stem, path))
+    return found
+
+
+def split_spec(spec):
+    name, _, modifier = spec.partition("@")
+    modifier = modifier.strip().lower()
+    if modifier and modifier not in MODIFIERS:
+        fail(f"modificateur inconnu « @{modifier} » ({', '.join('@' + m for m in MODIFIERS)})")
+    return name.strip(), modifier
+
+
+def resolve(spec, fonts=None):
+    """Canonical spec ("Name@modifier") and font file, or exit with suggestions."""
+    fonts = fonts or installed_fonts()
+    name, modifier = split_spec(spec)
+    entry = fonts.get(name.lower())
+    if not entry:
+        close = difflib.get_close_matches(name.lower(), fonts.keys(), n=4, cutoff=0.5)
+        hint = f" Peut-être : {', '.join(fonts[c][0] for c in close)}." if close else ""
+        fail(f"police introuvable : « {name} ».{hint} (screensaver-text fonts pour la liste)")
+    return entry[0] + (f"@{modifier}" if modifier else ""), entry[1]
+
+
+def figlet(path, text, full_width=False):
+    command = ["figlet", "-f", str(path), "-w", "2000"] + (["-W"] if full_width else []) + ["--", text]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode:
+        fail(f"figlet a échoué avec {path.name} : {result.stderr.strip()}")
+    return result.stdout.rstrip("\n").split("\n")
+
+
+def tidy(lines):
+    """Plain spaces only (some fonts pad with U+2001), no trailing spaces, no
+    blank lines around, no common left margin."""
+    lines = ["".join(" " if ch.isspace() else ch for ch in line).rstrip() for line in lines]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    margin = min((len(l) - len(l.lstrip()) for l in lines if l.strip()), default=0)
+    return [l[margin:] for l in lines]
+
+
+def missing_chars(path, text):
+    """Characters the font draws as nothing."""
+    return sorted({c for c in text if not c.isspace() and not any(l.strip() for l in figlet(path, c, True))})
+
+
+# ---- @grand -----------------------------------------------------------------
+
+def neighbourhood(grid, r, c):
+    return "".join(
+        "1" if 0 <= r + dr < len(grid) and 0 <= c + dc < len(grid[r + dr]) and grid[r + dr][c + dc] else "0"
+        for dr in (-1, 0, 1) for dc in (-1, 0, 1))
+
+
+def shadow_rules(path):
+    """Which character each empty cell gets, from the font's own letters: the
+    3x3 pattern of solid (█) cells around it decides."""
+    votes = collections.defaultdict(collections.Counter)
+    sample = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+    for chunk in (sample[i:i + 12] for i in range(0, len(sample), 12)):
+        lines = figlet(path, chunk, True)
+        width = max(map(len, lines))
+        lines = [l.ljust(width) for l in lines]
+        solid = [[ch == "█" for ch in l] for l in lines]
+        for r, line in enumerate(lines):
+            for c, ch in enumerate(line):
+                if not solid[r][c]:
+                    votes[neighbourhood(solid, r, c)][ch] += 1
+    rules = {k: v.most_common(1)[0][0] for k, v in votes.items()}
+    if any(ch.strip() for ch in rules.values()):   # only fonts with a shadow
+        rules.update(SHADOW_OVERRIDES)
+    return rules
+
+
+def grand(path, text):
+    lines = figlet(path, text, True)
+    if not any("█" in l for l in lines):
+        fail(f"@grand ne marche qu'avec les polices en blocs (█), pas avec {path.stem}")
+    width = max(map(len, lines))
+    solid = [[ch == "█" for ch in l.ljust(width)] for l in lines]
+    big = []
+    for row in solid:
+        wide = [cell for c, cell in enumerate(row) for _ in range(2 if c % 2 == 0 else 1)]
+        big += [wide, list(wide)]
+    big = [row + [False, False] for row in big] + [[False] * (len(big[0]) + 2)] * 2
+    rules = shadow_rules(path)
+    out = []
+    for r, row in enumerate(big):
+        line = ""
+        for c, cell in enumerate(row):
+            ch = "█" if cell else rules.get(neighbourhood(big, r, c), " ")
+            line += " " if ch in "▀▄·" else ch
+        out.append(line)
+    return out
+
+
+# ---- drawing ----------------------------------------------------------------
+
+def draw(spec, path, text):
+    _, modifier = split_spec(spec)
+    if modifier == "grand":
+        return tidy(grand(path, text))
+    return tidy(figlet(path, text, full_width=modifier == "large"))
+
+
+def screen_columns():
+    """Columns the screensaver gets on the narrowest monitor, or None."""
+    try:
+        monitors = json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True).stdout)
+        return min(int(m["width"] / m["scale"] / COLUMN_PX) for m in monitors)
+    except Exception:
+        return None
+
+
+def size(lines):
+    return max(map(len, lines), default=0), len(lines)
+
+
+def render_all(text, fonts):
+    """[(spec, lines or None, note)] for every font of the rotation. A font
+    that is too wide is left out; missing characters only get a note (they
+    show as a gap, which can be fine for a _ or a space-like sign)."""
+    installed = installed_fonts()
+    columns = screen_columns()
+    rows = []
+    for spec in fonts:
+        spec, path = resolve(spec, installed)
+        lines = draw(spec, path, text)
+        width, _ = size(lines)
+        if columns and width > columns:
+            rows.append((spec, None, f"trop large : {width} colonnes, l'écran en affiche ~{columns}"))
+            continue
+        missing = missing_chars(path, text)
+        rows.append((spec, lines, f"sans {' '.join(missing)} (absent de la police)" if missing else None))
+    return rows, columns
+
+
+def slug(spec):
+    return re.sub(r"[^a-z0-9]+", "-", spec.lower()).strip("-")
+
+
+def generate(text, fonts, quiet=False):
+    rows, columns = render_all(text, fonts)
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    for old in OUTPUT.glob("*.txt"):
+        old.unlink()
+    written = []
+    for spec, lines, _ in rows:
+        if lines is None:
+            continue
+        target = OUTPUT / f"{len(written) + 1:02d}-{slug(spec)}.txt"
+        target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        written.append(target)
+    if written:
+        # Right away too, in case the rotation service isn't running
+        tmp = BRANDING / "screensaver.txt.tmp"
+        shutil.copyfile(written[0], tmp)
+        tmp.replace(BRANDING / "screensaver.txt")
+    if not quiet:
+        status(text, rows, columns)
+    if not written:
+        fail("aucune police n'a pu dessiner ce texte, l'économiseur garde l'ancien")
+
+
+def status(text, rows, columns):
+    print(f"Texte : {text}")
+    if columns:
+        print(f"Écran : ~{columns} colonnes à la taille de l'économiseur")
+    print("Rotation :")
+    for i, (spec, lines, note) in enumerate(rows, 1):
+        if lines is None:
+            detail = f"ignorée, {note}"
+        else:
+            detail = f"{size(lines)[0]} × {size(lines)[1]}" + (f"  ⚠ {note}" if note else "")
+        print(f"  {i}. {spec:<30} {detail}")
+
+
+# ---- commands ---------------------------------------------------------------
+
+def pick(fonts, args):
+    """Specs from the rotation named by number or by name (modifier optional)."""
+    chosen = []
+    for arg in args:
+        if arg.isdigit() and 1 <= int(arg) <= len(fonts):
+            chosen.append(fonts[int(arg) - 1])
+            continue
+        name, modifier = split_spec(arg)
+        matches = [f for f in fonts if split_spec(f)[0].lower() == name.lower()
+                   and (not modifier or split_spec(f)[1] == modifier)]
+        if not matches:
+            fail(f"« {arg} » n'est pas dans la rotation (screensaver-text pour la voir)")
+        chosen += matches
+    return chosen
+
+
+def main(argv):
+    if argv and argv[0] in ("-h", "--help", "help"):
+        print(USAGE.format(config=CONFIG))
+        return
+    if not shutil.which("figlet"):
+        fail("figlet n'est pas installé (paquets figlet et figlet-fonts-extra)")
+    text, fonts = load()
+    command, args = (argv[0], argv[1:]) if argv else ("status", [])
+
+    if command == "status":
+        status(text, *render_all(text, fonts))
+    elif command == "set":
+        if not args or not " ".join(args).strip():
+            fail("set attend le texte, par exemple : screensaver-text set \"Bonjour\"")
+        text = " ".join(args)
+        save(text, fonts)
+        generate(text, fonts)
+    elif command == "add":
+        if not args:
+            fail("add attend au moins une police")
+        added = [resolve(a)[0] for a in args]
+        fonts += [a for a in added if a not in fonts]
+        save(text, fonts)
+        generate(text, fonts)
+    elif command in ("remove", "only"):
+        if not args:
+            fail(f"{command} attend au moins une police ou un numéro")
+        chosen = pick(fonts, args)
+        fonts = [f for f in fonts if (f in chosen) == (command == "only")]
+        if not fonts:
+            fail("la rotation serait vide : garde au moins une police")
+        save(text, fonts)
+        generate(text, fonts)
+    elif command == "reset":
+        fonts = DEFAULT_FONTS[:]
+        save(text, fonts)
+        generate(text, fonts)
+    elif command == "fonts":
+        pattern = " ".join(args).lower()
+        names = sorted({name for name, _ in installed_fonts().values() if pattern in name.lower()}, key=str.lower)
+        print("\n".join(names) if names else "aucune police ne correspond")
+    elif command == "preview":
+        if "--text" in args:
+            i = args.index("--text")
+            if i + 1 >= len(args):
+                fail("--text attend un texte")
+            text = args[i + 1]
+            args = args[:i] + args[i + 2:]
+        installed = installed_fonts()
+        for spec in (args or fonts):
+            spec, path = resolve(spec, installed)
+            missing = missing_chars(path, text)
+            lines = draw(spec, path, text)
+            note = f"  (caractères absents : {' '.join(missing)})" if missing else ""
+            print(f"── {spec} · {size(lines)[0]} × {size(lines)[1]}{note}")
+            print("\n".join(lines) + "\n")
+    elif command == "generate":
+        generate(text, fonts, quiet="--quiet" in args)
+    else:
+        fail(f"commande inconnue : {command} (screensaver-text --help)")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

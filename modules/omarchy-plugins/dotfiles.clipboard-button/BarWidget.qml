@@ -10,7 +10,7 @@ import qs.Ui
 // many entries there are and the pinned ones with their Alt+letter shortcut.
 BarWidget {
   id: root
-  moduleName: "verybad.clipboard-button"
+  moduleName: "dotfiles.clipboard-button"
 
   property int entryCount: 0
   property var pinned: []
@@ -67,7 +67,7 @@ BarWidget {
     tooltipText: root.tooltip
 
     onPressed: function(b) {
-      if (root.bar) root.bar.run("omarchy-shell shell toggle verybad.clipboard")
+      if (root.bar) root.bar.run("omarchy-shell shell toggle dotfiles.clipboard")
     }
   }
 }

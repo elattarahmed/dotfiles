@@ -1,5 +1,5 @@
 # Rust: rustup's stable toolchain (through Omarchy's dev-env installer), the
-# components the ESGI Rust roadmap asks for, Rustlings, and LazyVim's Rust extra
+# usual components (rust-analyzer, clippy, rustfmt, sources and docs), Rustlings, and LazyVim's Rust extra
 # (rustaceanvim, crates.nvim and the codelldb debugger, fetched by Mason).
 # Item: rust
 

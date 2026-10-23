@@ -41,7 +41,7 @@ Item {
   property int historyLimit: 300
 
   function open(payloadJson) {
-    console.log("verybad.clipboard: open (pins + shortcuts)")
+    console.log("dotfiles.clipboard: open (pins + shortcuts)")
     root.opened = true
     root.filterText = ""
     root.selectedIndex = 0

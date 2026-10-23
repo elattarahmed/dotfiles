@@ -1,5 +1,5 @@
 # zsh as the login shell, with a Powerlevel10k or starship prompt.
-# Items: zsh, zsh-p10k, zsh-p10k-mine, zsh-line-keys, zsh-selection, zsh-root
+# Items: zsh, zsh-p10k, zsh-p10k-style, zsh-line-keys, zsh-selection, zsh-root
 
 module_zsh() {
   selected zsh || return 0
@@ -13,7 +13,7 @@ module_zsh() {
   # The repo's prompt style needs a Nerd Font, so it is opt-in. Otherwise an
   # existing ~/.p10k.zsh is kept, and without one Powerlevel10k's wizard asks
   # on the first zsh start (it checks which icons this machine can show).
-  if selected zsh-p10k && selected zsh-p10k-mine; then
+  if selected zsh-p10k && selected zsh-p10k-style; then
     install_file "$dir/p10k.zsh" "$HOME/.p10k.zsh"
   elif selected zsh-p10k && [[ ! -f $HOME/.p10k.zsh ]]; then
     todo "zsh : au premier lancement, l'assistant Powerlevel10k te fait choisir le style du prompt (relance-le avec p10k configure)."

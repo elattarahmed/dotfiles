@@ -11,7 +11,7 @@ import qs.Ui
 // over the widget makes the active window wider or narrower.
 BarWidget {
   id: root
-  moduleName: "verybad.resize-mode"
+  moduleName: "dotfiles.resize-mode"
 
   readonly property string submapName: "resize"
   property bool resizing: false

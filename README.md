@@ -20,7 +20,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
-| `theme` | ✓ | thème Omarchy Hackerman (terminal, barre, écran de verrouillage, fond d'écran) |
+| `theme` | ✓ | thème [Black_arch](https://github.com/ankur311sudo/black_arch) avec mon fond d'écran (terminal, barre, écran de verrouillage). [Hermarchy](https://github.com/archer-clawbot/omarchy-hermarchy-theme) est installé aussi, à choisir dans le menu des thèmes |
 | `browser-brave` | ✓ | Brave comme navigateur par défaut (installé s'il manque) : un lien s'ouvre dans un nouvel onglet du Brave déjà ouvert |
 | `zsh` | ✓ | zsh comme shell par défaut, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |
 | `zsh-p10k` | ✓ | prompt Powerlevel10k. Au premier lancement, son assistant teste les icônes que ton terminal sait afficher et te fait choisir ton style (`p10k configure` pour le refaire). Décoché : le prompt starship d'Omarchy |
@@ -47,13 +47,13 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |
 | `whichport` | ✓ | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
-| `bar-layout` | ✓ | langue du clavier avant l'horloge, icônes d'applis après le réseau |
+| `bar-layout` | ✓ | barre transparente, langue du clavier avant l'horloge, icônes d'applis après le réseau |
 | `no-fcitx` | ✓ | désactive fcitx5 : sinon, dans Ghostty, Maj+flèches affiche un C ou un D au lieu de sélectionner. Les accents à touche morte (^ ¨) et la touche Compose sont gérés par les applis elles-mêmes |
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
 | `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur (ton Mac) ; le pare-feu n'ouvre le port 22 qu'au réseau local |
-| `display-scale` | | échelle de l'écran (le script demande la valeur ; 1.25 sur ce portable). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
+| `display-scale` | | échelle de l'écran (le script demande la valeur ; 1.6 sur ce portable). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
 
 `./install.sh --list` affiche la même liste.
 
@@ -170,7 +170,7 @@ Un repo cloné sans alias n'a pas d'identité : git refuse de commiter plutôt q
 
 ## Migrer une machine déjà configurée
 
-Sur la machine où tout a été fait à la main, les mêmes réglages sont déjà écrits dans les fichiers d'Omarchy. Les installer une deuxième fois les ferait tourner en double, par exemple un Alt+V qui colle deux fois. Le script le détecte et prévient. Pour passer cette machine sur le dépôt :
+Sur la machine où tout a été fait à la main, les mêmes réglages sont déjà écrits dans les fichiers d'Omarchy. Les installer une deuxième fois les ferait tourner en double, par exemple un Alt+V qui colle deux fois. Le script le détecte : il prévient et n'installe pas la partie Hyprland tant que ces réglages sont là. Pour passer cette machine sur le dépôt :
 
 ```bash
 omarchy refresh config hypr/bindings.lua      # chaque refresh sauvegarde l'ancien fichier

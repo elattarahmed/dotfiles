@@ -38,6 +38,21 @@ module_hyprland() {
   local hypr="$HOME/.config/hypr"
   info "Hyprland"
 
+  # The same customizations written straight into Omarchy's files would run twice
+  local found
+  # Commented-out lines don't count: Omarchy's own files carry examples
+  local file pattern='\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"|"Resize mode"'
+  found=$(for file in "$hypr"/{bindings,input,looknfeel,hyprland}.lua; do
+    [[ -f $file ]] && grep -v '^\s*--' "$file" | grep -qE "$pattern" && echo "$file"
+  done || true)
+  if [[ -n $found ]]; then
+    warn "ces fichiers contiennent déjà ces réglages : les installer aussi les doublerait (un Alt+V qui colle deux fois…)"
+    printf '      %s\n' $found | sed "s|$HOME|~|" >&2
+    warn "fonctionnalités Hyprland non installées"
+    todo "Hyprland : retire d'abord ces réglages de ~/.config/hypr (README, « Migrer une machine déjà configurée »), puis relance ./install.sh."
+    return 0
+  fi
+
   local file
   for file in "$dir"/features/*.lua; do
     install_file "$file" "$hypr/dotfiles/$(basename "$file")"
@@ -90,15 +105,5 @@ EOF
       printf '\n-- Features from the dotfiles repo (see hypr/dotfiles.lua)\nrequire("hypr.dotfiles")\n' >>"$main"
     fi
     ok "$(pretty "$main") charge maintenant hypr/dotfiles.lua"
-  fi
-
-  # The same customizations written straight into Omarchy's files would run twice
-  local found
-  found=$(grep -lE '\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"|"Resize mode"' \
-    "$hypr"/{bindings,input,looknfeel,hyprland}.lua 2>/dev/null || true)
-  if [[ -n $found ]]; then
-    warn "ces fichiers contiennent déjà certains de ces réglages, en double avec hypr/dotfiles/ :"
-    printf '      %s\n' $found | sed "s|$HOME|~|" >&2
-    todo "Retire ces réglages en double de ~/.config/hypr (README, « Migrer une machine déjà configurée »)."
   fi
 }

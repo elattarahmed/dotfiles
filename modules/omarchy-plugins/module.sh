@@ -67,7 +67,8 @@ module_omarchy_plugins() {
   if selected bar-layout && is_live; then
     omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
     omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
-    ok "disposition de la barre"
+    omarchy bar transparent true >/dev/null 2>&1 || true
+    ok "disposition de la barre (transparente)"
   fi
 
   if ((${RESTART_SHELL:-0})) && is_live; then

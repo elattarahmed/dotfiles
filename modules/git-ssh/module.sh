@@ -9,6 +9,11 @@ module_git_ssh() {
   selected git-ssh || return 0
   info "Comptes GitHub (SSH)"
 
+  # The GitHub CLI keeps its own login (a token, never stored in this repo)
+  if is_live && command -v gh >/dev/null && ! gh auth status >/dev/null 2>&1; then
+    todo "GitHub CLI : connecte-toi avec gh auth login."
+  fi
+
   local gitconfig="$HOME/.config/git/config" sshconfig="$HOME/.ssh/config"
   local configured
   configured=$(sed -n 's|^\[includeIf "hasconfig:remote\.\*\.url:git@github-\(.*\):\*/\*\*"\]$|\1|p' "$gitconfig" 2>/dev/null | xargs || true)

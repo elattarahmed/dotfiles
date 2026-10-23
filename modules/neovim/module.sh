@@ -1,10 +1,23 @@
-# Neovim spell check in French and English. LazyVim turns spell on for text,
-# markdown and git commits, in English only: every French word got a red wave.
-# Item: neovim-spell
+# Neovim spell check in French and English (LazyVim turns spell on for text,
+# markdown and git commits, in English only: every French word got a red wave),
+# and LazyVim's neo-tree file explorer extra.
+# Items: neovim-spell, neovim-neotree
 
 module_neovim() {
-  selected neovim-spell || return 0
+  selected neovim-spell || selected neovim-neotree || return 0
   info "Neovim"
+
+  local lazyvim="$HOME/.config/nvim/lazyvim.json"
+  if selected neovim-neotree; then
+    if [[ -f $lazyvim ]]; then
+      jq '.extras = ((.extras // []) + ["lazyvim.plugins.extras.editor.neo-tree"] | unique)' "$lazyvim" |
+        write_file "$lazyvim"
+    else
+      warn "pas de ~/.config/nvim/lazyvim.json : active l'extra editor.neo-tree avec :LazyExtras"
+    fi
+  fi
+
+  selected neovim-spell || return 0
 
   local options="$HOME/.config/nvim/lua/config/options.lua"
   if [[ -d $HOME/.config/nvim ]]; then

@@ -9,7 +9,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
-  "theme|on|Thème Omarchy Hackerman"
+  "theme|on|Thème Black_arch (et Hermarchy installé) avec mon fond d'écran"
   "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
@@ -30,23 +30,25 @@ ITEMS=(
   "zoom|on|Zoom façon macOS · clic à 3 doigts puis glisser ↑/↓ · remis à zéro pendant le verrouillage"
   "workspace-animation|on|Animation de glissement entre les workspaces"
   "no-middle-paste|on|Le clic du milieu (tap à 3 doigts) ne colle plus la sélection"
+  "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "screensaver|on|Économiseur d'écran · « V3ry_B4d » en huit styles qui tournent"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
   "scale-button|on|Barre · taille de l'affichage (molette ou clic pour agrandir/réduire)"
   "sysstats|on|Barre · RAM / CPU / température (clic pour passer de l'un à l'autre)"
   "whichport|on|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
-  "bar-layout|on|Barre · langue avant l'horloge et icônes d'applis après le réseau"
+  "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
+  "neovim-neotree|on|Neovim · explorateur de fichiers neo-tree (extra LazyVim)"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"
   "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
-  "display-scale|off|Échelle de l'écran (demande la valeur · 1.25 sur ce portable 2880×1800)"
+  "display-scale|off|Échelle de l'écran (demande la valeur · 1.6 sur ce portable 2880×1800)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 TODOS=()

@@ -41,6 +41,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile. Pendant le verrouillage et l'économiseur d'écran, le zoom revient à la normale, puis se remet au retour (service `zoom-lock-guard`) |
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
+| `screensaver` | ✓ | l'économiseur affiche « V3ry_B4d » au lieu d'« Omarchy », en deux styles qui alternent à chaque effet |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
@@ -138,6 +139,7 @@ Le prochain `./install.sh` réécrit ces fichiers d'après tes choix enregistré
 | `modules/ghostty/*.conf` | `~/.config/ghostty/dotfiles/`, inclus depuis `~/.config/ghostty/config` |
 | `modules/hyprland/features/*.lua` | `~/.config/hypr/dotfiles/`, chargés par `~/.config/hypr/dotfiles.lua` |
 | `modules/omarchy-plugins/*`, `modules/whichport/plugin` | `~/.config/omarchy/plugins/` |
+| `modules/screensaver/texts/*.txt` | `~/.config/omarchy/branding/screensaver.d/`. Le service `screensaver-rotate` les fait tourner dans `screensaver.txt`, un par effet et dans l'ordre des noms : ajoute ou retire un fichier pour changer la rotation |
 | *(généré)* | `~/.config/fcitx5/profile`, une ligne dans `~/.config/nvim/lua/config/options.lua` |
 
 Les fichiers Hyprland d'Omarchy (`bindings.lua`, `input.lua`, `looknfeel.lua`…) ne sont pas modifiés, à une ligne près : `require("hypr.dotfiles")` dans `hyprland.lua`. La config de Ghostty et les options de Neovim reçoivent seulement quelques lignes à la fin. Les mises à jour d'Omarchy continuent donc de s'appliquer.

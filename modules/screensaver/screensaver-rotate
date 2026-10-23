@@ -1,0 +1,23 @@
+#!/bin/bash
+# Alternates the screensaver text between the files in
+# ~/.config/omarchy/branding/screensaver.d/ (in name order).
+#
+# Omarchy's screensaver runs ttfx once per effect, and each run reads
+# screensaver.txt once: as soon as a read finishes, the next text takes its place.
+
+set -u
+shopt -s nullglob
+
+dir="$HOME/.config/omarchy/branding"
+target="$dir/screensaver.txt"
+i=0
+
+while true; do
+  texts=("$dir"/screensaver.d/*.txt)
+  ((${#texts[@]})) || exit 0
+  ((i %= ${#texts[@]}))
+  # Swap in a whole file at once, so a read never sees half of one
+  cp "${texts[i]}" "$target.tmp" && mv -f "$target.tmp" "$target"
+  ((i++))
+  inotifywait -qq -e close_nowrite "$target" || sleep 5
+done

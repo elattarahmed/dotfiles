@@ -1,11 +1,26 @@
 # Neovim spell check in French and English (LazyVim turns spell on for text,
 # markdown and git commits, in English only: every French word got a red wave),
-# and LazyVim's neo-tree file explorer extra.
-# Items: neovim-spell, neovim-neotree
+# LazyVim's neo-tree file explorer extra, and a colorscheme picked on its own
+# whatever the Omarchy theme (<leader>uC or :Theme).
+# Items: neovim-spell, neovim-neotree, neovim-themes
 
 module_neovim() {
-  selected neovim-spell || selected neovim-neotree || return 0
+  local choice="$HOME/.config/nvim/lua/plugins/theme-choice.lua"
+  if ! selected neovim-themes && [[ -e $choice || -L $choice ]]; then
+    backup "$choice"
+    rm -f "$choice"
+    ok "Neovim suit de nouveau le thème Omarchy"
+  fi
+  selected neovim-spell || selected neovim-neotree || selected neovim-themes || return 0
   info "Neovim"
+
+  if selected neovim-themes; then
+    if [[ -d $HOME/.config/nvim/lua/plugins ]]; then
+      install_file "$DOTFILES_DIR/modules/neovim/theme-choice.lua" "$choice"
+    else
+      warn "pas de ~/.config/nvim/lua/plugins : sélecteur de thème ignoré"
+    fi
+  fi
 
   local lazyvim="$HOME/.config/nvim/lazyvim.json"
   if selected neovim-neotree; then

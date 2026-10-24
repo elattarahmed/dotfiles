@@ -11,6 +11,8 @@ module_plymouth() {
   is_live || return 0
   if [[ $(omarchy plymouth current 2>/dev/null) == "$PLYMOUTH_THEME" ]]; then
     ok "écran de démarrage déjà en $PLYMOUTH_THEME"
+  elif ! can_sudo; then
+    todo "Écran de démarrage : relance ./install.sh dans un terminal (il demande le mot de passe sudo)."
   elif omarchy plymouth set by theme "$PLYMOUTH_THEME"; then
     ok "écran de démarrage en $PLYMOUTH_THEME (visible au prochain démarrage)"
   else

@@ -36,7 +36,9 @@ EOF
     fi
   fi
 
-  if selected zsh-root; then
+  if selected zsh-root && ! can_sudo; then
+    todo "zsh pour root : relance ./install.sh dans un terminal (il demande le mot de passe sudo)."
+  elif selected zsh-root; then
     # A copy, not a link: a link would let anything running as you change
     # what runs the next time a root shell opens.
     [[ $(getent passwd root | cut -d: -f7) == */zsh ]] || sudo chsh -s /usr/bin/zsh root

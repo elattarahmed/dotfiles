@@ -42,6 +42,7 @@ ITEMS=(
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
   "apps|on|Applications en terminal · tree · glow (Markdown) · pacseek (recherche de paquets)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
+  "neovim-themes|on|Neovim · choisir son thème à part de celui d'Omarchy (<leader>uC ou :Theme)"
   "neovim-neotree|on|Neovim · explorateur de fichiers neo-tree (extra LazyVim)"
   "rust|on|Rust · rustup stable avec clippy/rustfmt/rust-analyzer · Rustlings · LazyVim Rust"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"

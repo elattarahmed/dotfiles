@@ -53,6 +53,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
 | `neovim-neotree` | ✓ | explorateur de fichiers neo-tree dans Neovim (extra LazyVim) |
+| `neovim-themes` | ✓ | thème de Neovim choisi à part de celui d'Omarchy, et gardé : `<leader>uC` (Espace, u, Maj+C) ou `:Theme` ouvre la liste avec aperçu en direct, Entrée garde le thème, `:Theme omarchy` revient au thème Omarchy. Le thème VS Code (`vscode`) est ajouté à la liste |
 | `apps` | ✓ | applications en terminal : `tree` (arborescence d'un dossier), `glow` (Markdown mis en forme), `pacseek` (chercher et installer des paquets, AUR compris) |
 | `rust` | ✓ | Rust stable par rustup (`omarchy install dev-env rust`) avec clippy, rustfmt, rust-analyzer, rust-src et la doc hors ligne (`rustup doc --std`), [Rustlings](https://github.com/rust-lang/rustlings), et l'extra Rust de LazyVim (rustaceanvim, crates.nvim, débogueur codelldb installé par Mason au premier lancement) |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
@@ -104,6 +105,14 @@ Dans un terminal, ces touches Alt arrivent telles quelles à zsh, qui a ses prop
 | Alt+1…9 | remettre dans le presse-papiers l'un des 9 derniers éléments |
 
 Les éléments épinglés restent en haut de la liste et gardent leur lettre. Désactiver `clipboard` les perd (le gestionnaire d'Omarchy ne connaît pas les épingles) : le script garde avant une copie de l'historique dans ses sauvegardes. Ils ne sont jamais effacés automatiquement, même quand on vide l'historique (Suppr les supprime un par un).
+
+**Neovim (`neovim-themes`)**
+
+| Raccourci | Action |
+|---|---|
+| `<leader>uC` ou `:Theme` | choisir le thème de Neovim, avec aperçu ; Entrée le garde, même après un changement de thème Omarchy |
+| `:Theme tokyonight` | garder ce thème directement (Tab complète les noms) |
+| `:Theme omarchy` | suivre de nouveau le thème Omarchy |
 
 **zsh et Ghostty**
 

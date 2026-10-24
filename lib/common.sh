@@ -18,6 +18,8 @@ warn() { printf '  \033[33m!\033[0m %s\n' "$*" >&2; }
 todo() { TODOS+=("$*"); }
 
 is_live() { ((!FILES_ONLY)); }
+# sudo can only ask for a password (or a fingerprint) in a terminal
+can_sudo() { [[ -t 0 ]]; }
 interactive() { ((!ASSUME_YES)) && [[ -t 0 ]]; }
 pretty() { printf '%s' "${1/#$HOME/\~}"; }
 
@@ -142,6 +144,10 @@ ensure_block() {
 pkg_add() {
   is_live || return 0
   omarchy pkg missing "$@" || return 0
+  if ! can_sudo; then
+    todo "Paquets à installer : $* (relance ./install.sh dans un terminal)"
+    return 0
+  fi
   info "Paquets : $*"
   omarchy pkg add "$@"
 }
@@ -149,6 +155,10 @@ pkg_add() {
 aur_add() {
   is_live || return 0
   omarchy pkg missing "$@" || return 0
+  if ! can_sudo; then
+    todo "Paquets AUR à installer : $* (relance ./install.sh dans un terminal)"
+    return 0
+  fi
   info "Paquets AUR : $*"
   omarchy pkg aur add "$@"
 }

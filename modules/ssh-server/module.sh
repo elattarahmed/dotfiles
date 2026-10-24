@@ -13,7 +13,12 @@ module_ssh_server() {
   is_live || return 0
 
   pkg_add openssh
-  if sudo systemctl enable --now sshd >/dev/null 2>&1; then
+  if systemctl is-enabled --quiet sshd 2>/dev/null && systemctl is-active --quiet sshd; then
+    ok "sshd déjà actif"
+  elif ! can_sudo; then
+    todo "Serveur SSH : relance ./install.sh dans un terminal (il demande le mot de passe sudo)."
+    return 0
+  elif sudo systemctl enable --now sshd >/dev/null 2>&1; then
     ok "sshd activé"
   else
     warn "impossible d'activer sshd (sudo systemctl enable --now sshd)"
@@ -23,6 +28,8 @@ module_ssh_server() {
   subnet=$(lan_subnet)
   if [[ -z $subnet ]]; then
     warn "réseau local introuvable : pare-feu non modifié"
+  elif ! can_sudo; then
+    todo "Serveur SSH : pare-feu non vérifié sans terminal (relance ./install.sh dans un terminal)."
   elif command -v ufw >/dev/null; then
     if sudo ufw allow from "$subnet" to any port 22 proto tcp comment 'SSH LAN' >/dev/null; then
       ok "pare-feu : SSH ouvert pour $subnet seulement"

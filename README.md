@@ -57,6 +57,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `neovim-themes` | ✓ | thème de Neovim choisi à part de celui d'Omarchy, et gardé : `<leader>uC` (Espace, u, Maj+C) ou `:Theme` ouvre la liste avec aperçu en direct, Entrée garde le thème, `:Theme omarchy` revient au thème Omarchy. Le thème VS Code (`vscode`) est ajouté à la liste |
 | `apps` | ✓ | applications en terminal : `tree` (arborescence d'un dossier), `glow` (Markdown mis en forme), `pacseek` (chercher et installer des paquets, AUR compris) |
 | `rust` | ✓ | Rust stable par rustup (`omarchy install dev-env rust`) avec clippy, rustfmt, rust-analyzer, rust-src et la doc hors ligne (`rustup doc --std`), [Rustlings](https://github.com/rust-lang/rustlings), et l'extra Rust de LazyVim (rustaceanvim, crates.nvim, débogueur codelldb installé par Mason au premier lancement) |
+| `asm` | ✓ | Assembleur x86-64 pour la roadmap ESGI : NASM, gdb + pwndbg, binutils (objdump/readelf), strace et ltrace. Le dépôt `asm-roadmap` lui-même se crée avec `init-asm-roadmap.sh` dans le dossier ESGI |
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
 | `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur ; le pare-feu n'ouvre le port 22 qu'au réseau local |
 | `display-scale` | | échelle de l'écran (le script demande la valeur). Le bouton `scale-button` permet ensuite de la changer depuis la barre |

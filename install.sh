@@ -46,13 +46,14 @@ ITEMS=(
   "neovim-themes|on|Neovim · choisir son thème à part de celui d'Omarchy (<leader>uC ou :Theme)"
   "neovim-neotree|on|Neovim · explorateur de fichiers neo-tree (extra LazyVim)"
   "rust|on|Rust · rustup stable avec clippy/rustfmt/rust-analyzer · Rustlings · LazyVim Rust"
+  "asm|on|Assembleur x86-64 · NASM, gdb + pwndbg, binutils, strace/ltrace (roadmap ESGI)"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"
   "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
   "display-scale|off|Échelle de l'écran (demande la valeur)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim rust apps git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim rust asm apps git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"

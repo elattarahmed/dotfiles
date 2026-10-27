@@ -1,7 +1,7 @@
 # Features from the dotfiles repo, turned on/off in ~/.config/zsh/dotfiles.zsh
 # (only variables: safe above the instant prompt)
 [[ -r ~/.config/zsh/dotfiles.zsh ]] && source ~/.config/zsh/dotfiles.zsh
-: ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1} ${DOTFILES_ZSH_P10K:=1}
+: ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1} ${DOTFILES_ZSH_P10K:=1} ${DOTFILES_ZSH_PROGRESS:=1}
 
 # Powerlevel10k instant prompt — keep near the top. Anything that needs
 # console input (passwords, [y/n] prompts) must go above this block.
@@ -157,6 +157,12 @@ command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 command -v fzf &>/dev/null && source <(fzf --zsh)
 # Alt+C copies the selection (overrides fzf's cd widget)
 (( DOTFILES_ZSH_SELECTION )) && bindkey '^[c' _region-copy
+
+# cp/mv with two progress bars, total and current file (advcpmv from the AUR).
+# Only in this shell: scripts keep the plain coreutils cp/mv.
+if (( DOTFILES_ZSH_PROGRESS )) && (( $+commands[advcp] )); then
+  alias cp='advcp -g' mv='advmv -g'
+fi
 
 # Prompt: Powerlevel10k, or Omarchy's starship when it is turned off or not
 # installed. Without ~/.p10k.zsh, Powerlevel10k starts its `p10k configure`

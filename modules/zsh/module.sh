@@ -1,5 +1,5 @@
 # zsh as the login shell, with a Powerlevel10k or starship prompt.
-# Items: zsh, zsh-p10k, zsh-p10k-style, zsh-line-keys, zsh-selection, zsh-root
+# Items: zsh, zsh-p10k, zsh-p10k-style, zsh-line-keys, zsh-selection, zsh-progress, zsh-root
 
 module_zsh() {
   selected zsh || return 0
@@ -8,6 +8,7 @@ module_zsh() {
 
   pkg_add zsh zsh-autosuggestions zsh-syntax-highlighting zsh-completions
   selected zsh-p10k && aur_add zsh-theme-powerlevel10k-git
+  selected zsh-progress && aur_add advcpmv
 
   install_file "$dir/zshrc" "$HOME/.zshrc"
   # The repo's prompt style needs a Nerd Font, so it is opt-in. Otherwise an
@@ -24,6 +25,7 @@ module_zsh() {
 DOTFILES_ZSH_LINE_KEYS=$(selected zsh-line-keys && echo 1 || echo 0)  # zsh-line-keys: Ctrl/Alt + Backspace/Delete, Alt + arrows
 DOTFILES_ZSH_SELECTION=$(selected zsh-selection && echo 1 || echo 0)  # zsh-selection: Shift + arrows select, Alt+A/C/X
 DOTFILES_ZSH_P10K=$(selected zsh-p10k && echo 1 || echo 0)  # zsh-p10k: Powerlevel10k prompt (0: Omarchy's starship)
+DOTFILES_ZSH_PROGRESS=$(selected zsh-progress && echo 1 || echo 0)  # zsh-progress: cp/mv show total and per-file progress bars
 EOF
 
   is_live || return 0

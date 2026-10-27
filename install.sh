@@ -16,6 +16,7 @@ ITEMS=(
   "zsh-p10k-style|off|zsh · le style de prompt Powerlevel10k du dépôt tel quel (demande une police avec icônes Nerd Font)"
   "zsh-line-keys|on|zsh · Ctrl/Alt + Effacer/Suppr et Alt + flèches (début/fin de ligne)"
   "zsh-selection|on|zsh · sélection avec Maj + flèches · Alt+A/C/X tout sélectionner/copier/couper"
+  "zsh-progress|on|zsh · cp et mv avec deux barres de progression (totale et fichier par fichier)"
   "zsh-root|off|zsh et la même config pour root (sudo)"
   "ghostty|on|Ghostty comme terminal par défaut"
   "ghostty-font|on|Ghostty · texte en taille 11 au lieu de 9"

@@ -176,6 +176,10 @@ fi
 # suggestion, Ctrl+Right accepts the next word.
 ZSH_AUTOSUGGEST_ACCEPT_WIDGETS+=(deselect-forward-char deselect-end-of-line)
 ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(deselect-forward-word)
+# Up/Down clear the suggestion instead of fetching a new one: the async fetch
+# runs autosuggest-suggest, which resets $LASTWIDGET, so the next Up started a
+# fresh search with the whole recalled line as prefix and got stuck on it.
+ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(deselect-up-line-or-beginning-search deselect-down-line-or-beginning-search)
 # syntax-highlighting must be sourced last
 [[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
   source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

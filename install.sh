@@ -38,6 +38,7 @@ ITEMS=(
   "scale-button|on|Barre · taille de l'affichage (molette ou clic pour agrandir/réduire)"
   "sysstats|on|Barre · RAM / CPU / température (clic pour passer de l'un à l'autre)"
   "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
+  "airpods|on|Barre · AirPods (batterie et réduction de bruit) · airpods-tui et DeviceID Apple pour Bluetooth (sudo)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
@@ -52,7 +53,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport input-method lockscreen-layout neovim rust apps git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins whichport airpods input-method lockscreen-layout neovim rust apps git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"

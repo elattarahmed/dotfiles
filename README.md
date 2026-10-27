@@ -49,6 +49,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |
 | `whichport` | | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
+| `airpods` | ✓ | [omarchy-airpods](https://github.com/SotoAugusto/omarchy-airpods) : batterie, réduction de bruit et détection d'oreille des AirPods dans la barre. Installe le démon `airpods-tui-bin` (AUR), met `DeviceID = bluetooth:004C:0000:0000` une seule fois dans `/etc/bluetooth/main.conf` (et retire les doublons), redémarre Bluetooth si la ligne vient d'être ajoutée et lance `airpods-tui` à la connexion. Après un premier ajout, oublie puis réappaire les AirPods. Demande le mot de passe sudo |
 | `bar-layout` | ✓ | barre transparente, langue du clavier avant l'horloge, icônes d'applis après le réseau |
 | `no-fcitx` | ✓ | désactive fcitx5 : sinon, dans Ghostty, Maj+flèches affiche un C ou un D au lieu de sélectionner. Les accents à touche morte (^ ¨) et la touche Compose sont gérés par les applis elles-mêmes |
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |

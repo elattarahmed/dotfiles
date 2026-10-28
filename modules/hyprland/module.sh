@@ -7,6 +7,7 @@ HYPR_FEATURES=(
   "resize-mode|resize_mode|SUPER + R, then arrows: resize the active window"
   "macos-keys|macos_keys|ALT as Cmd: Alt+C/V/X, Alt+A/Z/S/F/T/W/L/R, Alt+1..9, SUPER + Q, CTRL + ALT + SPACE emojis"
   "clipboard|clipboard_keys|ALT + SHIFT + V: clipboard history with pins"
+  "screenshot-keys|screenshot_keys|SUPER + SHIFT + S: screenshot (instead of Google Maps)"
   "gestures|gestures|3-finger swipe left/right: switch workspace"
   "natural-scroll|natural_scroll|Touchpad: natural (macOS) scrolling, slower"
   "touchscreen-off|touchscreen_off|Touchscreen turned off"

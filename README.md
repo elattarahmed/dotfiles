@@ -45,6 +45,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `screensaver` | ✓ | l'économiseur affiche ton texte au lieu du logo Omarchy, dessiné dans huit polices ASCII qui tournent, une par effet. Le script demande le texte ; `screensaver-text` le change ensuite (voir plus bas) |
 | `plymouth` | ✓ | écran de démarrage (celui du mot de passe du disque) aux couleurs Matte Black. Demande le mot de passe sudo |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
+| `screenshot-keys` | ✓ | Super+Maj+S fait une capture d'écran, comme Impr écran (qui marche toujours). Le raccourci Google Maps d'Omarchy qui était dessus est retiré |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |

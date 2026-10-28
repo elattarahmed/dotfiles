@@ -34,6 +34,7 @@ ITEMS=(
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
+  "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
   "scale-button|on|Barre · taille de l'affichage (molette ou clic pour agrandir/réduire)"
   "sysstats|on|Barre · RAM / CPU / température (clic pour passer de l'un à l'autre)"

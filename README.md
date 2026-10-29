@@ -7,8 +7,8 @@ Une config [Omarchy](https://omarchy.org/) (Arch Linux + Hyprland) prête à cop
 Sur une machine où Omarchy est déjà installé :
 
 ```bash
-git clone <adresse de ce dépôt> ~/dotfiles
-cd ~/dotfiles
+git clone https://github.com/elattarahmed/dotfiles
+cd dotfiles
 ./install.sh
 ```
 

@@ -128,8 +128,9 @@ menu() {
   if command -v gum >/dev/null; then
     local joined
     joined=$(IFS=,; echo "${preselect[*]}")
+    # gum 2 toggles with x or Tab; Space does nothing
     gum choose --no-limit --height 24 --label-delimiter="|" --selected="$joined" \
-      --header "Espace pour cocher/décocher, Entrée pour valider" "${labels[@]}"
+      --header "x (ou Tab) coche/décoche · Ctrl+A coche tout · Entrée valide" "${labels[@]}"
   else
     for item in "${ITEMS[@]}"; do
       IFS='|' read -r id _ label <<<"$item"

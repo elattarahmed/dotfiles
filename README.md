@@ -12,7 +12,7 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-Un menu liste tous les éléments. Ceux par défaut sont déjà cochés : **Espace** coche ou décoche, **Entrée** valide. Le script demande ton mot de passe sudo quand il installe des paquets. À la fin, il affiche ce qui reste à faire de ton côté, par exemple se déconnecter pour passer à zsh, ou ajouter une clé SSH sur GitHub.
+Un menu liste tous les éléments. Ceux par défaut sont déjà cochés : **x** (ou **Tab**) coche ou décoche, **Ctrl+A** coche tout, **Entrée** valide. La barre d'espace ne fait rien dans ce menu. Le script demande ton mot de passe sudo quand il installe des paquets. À la fin, il affiche ce qui reste à faire de ton côté, par exemple se déconnecter pour passer à zsh, ou ajouter une clé SSH sur GitHub.
 
 Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/backups/<date>/`. Relancer le script ne change que ce qui a changé dans le dépôt.
 

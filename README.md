@@ -51,6 +51,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |
 | `whichport` | | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
 | `bar-layout` | ✓ | barre transparente, langue du clavier avant l'horloge, icônes d'applis après le réseau |
+| `interstellar-bar` | ✓ | le rice waybar « Interstellar » sur la barre d'Omarchy : ses couleurs (fond bleu nuit à 92 %, texte crème, bordures cyan, rouge d'alerte) pour la barre, ses popups et les notifications seulement, le thème reste le même (`~/.config/omarchy/shell.toml`). Ajoute le titre de la fenêtre active et trois modules : VPN (rouge sans VPN), IP locale et IP publique avec le pays (api.ipify.org et ipapi.co toutes les 5 min) ; un clic copie l'adresse. La barre devient opaque, même avec `bar-layout` |
 | `no-fcitx` | ✓ | désactive fcitx5 : sinon, dans Ghostty, Maj+flèches affiche un C ou un D au lieu de sélectionner. Les accents à touche morte (^ ¨) et la touche Compose sont gérés par les applis elles-mêmes |
 | `lockscreen-layout` | ✓ | avec fcitx5 seulement : le mot de passe de l'écran de verrouillage se tape dans la même disposition que la session (sinon c'est du QWERTY). Ignoré avec `no-fcitx` |
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |

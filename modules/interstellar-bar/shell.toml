@@ -1,0 +1,34 @@
+# Interstellar colors for the bar and notifications only (from the Interstellar
+# waybar rice); everything else keeps the current theme. omarchy-shell layers
+# this file over the theme's shell.toml, key by key, and reloads it live.
+#
+#   space black #0a0e1a · paper cream #e8dcc4 · wormhole cyan #6ab0d1
+#   endurance amber #d97e2f · warning red #c04a3d
+
+[bar]
+background       = "#0a0e1a"
+background-alpha = 0.92
+text             = "#e8dcc4"
+active           = "#c04a3d"
+
+[popups]
+background       = "#0a0e1a"
+background-alpha = 0.95
+text             = "#e8dcc4"
+border           = "#6ab0d1"
+border-alpha     = 1.0
+
+[tooltip]
+background       = "#0a0e1a"
+background-alpha = 0.95
+text             = "#e8dcc4"
+border           = "#6ab0d1"
+border-alpha     = 1.0
+
+[notifications]
+background       = "#0a0e1a"
+background-alpha = 0.95
+text             = "#e8dcc4"
+border           = "#6ab0d1"
+border-alpha     = 1.0
+countdown        = "#d97e2f"

@@ -1,0 +1,17 @@
+#!/bin/bash
+# Bar module: local IPv4 address of the interface that reaches the internet.
+# --copy puts the address in the clipboard instead.
+
+read -r ip iface < <(ip -4 -o route get 1.1.1.1 2>/dev/null |
+  awk '{for (i = 1; i < NF; i++) {if ($i == "src") s = $(i + 1); if ($i == "dev") d = $(i + 1)}} END {print s, d}')
+
+if [[ $1 == --copy ]]; then
+  [[ -n $ip ]] && printf '%s' "$ip" | wl-copy && notify-send "Local IP copied" "$ip"
+  exit 0
+fi
+
+if [[ -n $ip ]]; then
+  jq -cn --arg ip "$ip" --arg iface "$iface" '{text: "󰩟 \($ip)", tooltip: "Local IP\niface: \($iface)"}'
+else
+  jq -cn '{text: "󰩟 --", tooltip: "No network"}'
+fi

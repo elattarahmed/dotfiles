@@ -1,0 +1,29 @@
+#!/bin/bash
+# Bar module: public IPv4 address (api.ipify.org) and its country (ipapi.co).
+# Unreachable is marked "active" so the bar shows it in its attention color.
+# --copy puts the address in the clipboard instead.
+
+pubip=$(curl -s --max-time 4 https://api.ipify.org 2>/dev/null)
+
+if [[ $1 == --copy ]]; then
+  [[ -n $pubip ]] && printf '%s' "$pubip" | wl-copy && notify-send "Public IP copied" "$pubip"
+  exit 0
+fi
+
+if [[ -z $pubip ]]; then
+  jq -cn '{text: "󰖪 --", tooltip: "Public IP unreachable", class: "active"}'
+  exit 0
+fi
+
+# ipapi.co rate-limits shared addresses: ask again only when the IP changes,
+# and keep only an answer that looks like a country name (not its error JSON)
+cache="${XDG_RUNTIME_DIR:-/tmp}/interstellar-public-ip"
+country=""
+[[ -f $cache ]] && IFS=$'\t' read -r cached_ip country <"$cache"
+if [[ ${cached_ip:-} != "$pubip" || -z $country ]]; then
+  country=$(curl -s --max-time 4 "https://ipapi.co/$pubip/country_name/" 2>/dev/null)
+  [[ $country =~ ^[[:alpha:]][[:alpha:]\ .,\'()-]{0,59}$ ]] || country=""
+  printf '%s\t%s\n' "$pubip" "$country" >"$cache"
+fi
+
+jq -cn --arg ip "$pubip" --arg country "${country:-Country unknown}" '{text: "󰖩 \($ip)", tooltip: "Public IP: \($ip)\n\($country)"}'

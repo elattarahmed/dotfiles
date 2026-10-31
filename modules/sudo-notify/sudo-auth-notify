@@ -1,0 +1,91 @@
+#!/bin/bash
+# Run as root by pam_exec at the top of sudo's auth stack, so only when sudo
+# really asks (not while its timestamp is still valid). Shows a notification
+# on the desktop of the user sudo is asking, with whether the fingerprint
+# reader is usable, so a prompt in a terminal on another workspace isn't
+# missed. Clicking it focuses that terminal.
+#
+# Installed as a root-owned copy, never a link into the repo: anything running
+# as the user could otherwise change what runs as root. It must never hold
+# sudo up: everything past a few checks runs detached, and the PAM line is
+# optional.
+
+# pam_exec passes only the PAM environment
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
+
+if [[ ${1:-} != --detached ]]; then
+  [[ ${PAM_TYPE:-} == auth ]] || exit 0
+  user=${PAM_RUSER:-${PAM_USER:-}}
+  uid=$(id -u -- "$user" 2>/dev/null) || exit 0
+  [[ -S /run/user/$uid/bus ]] || exit 0
+  # sudo over SSH: nobody is in front of this desktop
+  tr '\0' '\n' <"/proc/$PPID/environ" 2>/dev/null | grep -q '^SSH_CONNECTION=' && exit 0
+
+  # The fingerprint is offered when sudo's PAM file has pam_fprintd, a finger
+  # is enrolled, and the lid is open (Omarchy skips the reader when closed).
+  fingerprint=0
+  if grep -qE '^[[:space:]]*auth[[:space:]].*pam_fprintd' /etc/pam.d/sudo &&
+    compgen -G "/var/lib/fprint/$user/*" >/dev/null; then
+    fingerprint=1
+    for state in /proc/acpi/button/lid/*/state; do
+      [[ -r $state && $(<"$state") == *closed* ]] && fingerprint=0
+    done
+  fi
+
+  export user uid fingerprint sudo_pid=$PPID
+  setsid -f "$0" --detached </dev/null >/dev/null 2>&1
+  exit 0
+fi
+
+gid=$(id -g -- "$user")
+home=$(getent passwd "$user" | cut -d: -f6)
+run=/run/user/$uid
+sig=$(ls -t "$run/hypr" 2>/dev/null | head -n 1)
+
+as_user() {
+  setpriv --reuid="$uid" --regid="$gid" --init-groups \
+    env -i HOME="$home" USER="$user" PATH=/usr/local/bin:/usr/bin \
+    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus" \
+    HYPRLAND_INSTANCE_SIGNATURE="$sig" "$@"
+}
+
+# The terminal window: the closest ancestor of sudo that owns a window.
+# Terminals like Ghostty run every window in one process, so among its
+# windows take the one titled after the command typed in the shell (the
+# ancestor two levels below the terminal), else the one used last.
+address='' workspace=''
+if [[ -n $sig ]] && clients=$(as_user hyprctl clients -j 2>/dev/null); then
+  chain=() pid=$sudo_pid
+  while ((pid > 1)); do
+    chain+=("$pid")
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+    [[ -n $pid ]] || break
+  done
+  for ((i = 0; i < ${#chain[@]}; i++)); do
+    jq -e --argjson pid "${chain[i]}" 'any(.[]; .pid == $pid)' <<<"$clients" >/dev/null || continue
+    command=sudo
+    ((i >= 2)) && command=$(ps -o comm= -p "${chain[i - 2]}")
+    read -r address workspace < <(jq -r --argjson pid "${chain[i]}" --arg command "$command" '
+      [.[] | select(.pid == $pid)] | sort_by(.focusHistoryID)
+      | (first(.[] | select(.title | startswith($command))) // .[0])
+      | "\(.address) \(.workspace.name)"' <<<"$clients")
+    break
+  done
+fi
+
+if ((fingerprint)); then
+  summary="sudo attend ton empreinte"
+  body="Pose ton doigt sur le capteur ou tape ton mot de passe dans le terminal"
+else
+  summary="sudo attend ton mot de passe"
+  body="Tape-le dans le terminal"
+fi
+[[ -n $workspace ]] && body+=" (workspace $workspace)"
+
+action=$(as_user timeout 300 notify-send -a sudo -i dialog-password \
+  -A "default=Aller au terminal" -w "$summary" "$body" 2>/dev/null)
+if [[ $action == default && -n $address ]]; then
+  as_user hyprctl dispatch "hl.dsp.focus({ window = \"address:$address\" })" >/dev/null 2>&1 ||
+    as_user hyprctl dispatch focuswindow "address:$address" >/dev/null 2>&1
+fi
+exit 0

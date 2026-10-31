@@ -44,6 +44,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
 | `screensaver` | ✓ | l'économiseur affiche ton texte au lieu du logo Omarchy, dessiné dans huit polices ASCII qui tournent, une par effet. Le script demande le texte ; `screensaver-text` le change ensuite (voir plus bas) |
 | `plymouth` | ✓ | écran de démarrage (celui du mot de passe du disque) aux couleurs Matte Black. Demande le mot de passe sudo |
+| `sudo-notify` | ✓ | notification quand sudo attend ton mot de passe ou ton empreinte dans un terminal (elle dit si le lecteur d'empreinte est utilisable) ; un clic amène au terminal. Seulement quand sudo demande vraiment, pas en SSH. Une ligne `pam_exec` facultative en haut de `/etc/pam.d/sudo` lance un script copié dans `/usr/local/lib/dotfiles` (appartient à root : jamais un lien vers le dépôt). Demande le mot de passe sudo |
 | `clipboard` | ✓ | historique du presse-papiers avec épingles, façon Maccy, et son bouton dans la barre |
 | `screenshot-keys` | ✓ | Super+Maj+S fait une capture d'écran, comme Impr écran (qui marche toujours). Le raccourci Google Maps d'Omarchy qui était dessus est retiré |
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |

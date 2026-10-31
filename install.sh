@@ -32,6 +32,7 @@ ITEMS=(
   "workspace-animation|on|Animation de glissement entre les workspaces"
   "no-middle-paste|on|Le clic du milieu (tap à 3 doigts) ne colle plus la sélection"
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
+  "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
@@ -55,7 +56,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth omarchy-plugins interstellar-bar whichport input-method lockscreen-layout neovim rust asm apps git-ssh ssh-server display)
+MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar whichport input-method lockscreen-layout neovim rust asm apps git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"

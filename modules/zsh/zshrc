@@ -164,6 +164,10 @@ if (( DOTFILES_ZSH_PROGRESS )) && (( $+commands[advcp] )); then
   alias cp='advcp -g' mv='advmv -g'
 fi
 
+# The trailing space makes zsh expand the next word's alias too, so
+# `sudo cp` / `sudo mv` keep the progress bars (and `sudo g` runs git).
+alias sudo='sudo '
+
 # Prompt: Powerlevel10k, or Omarchy's starship when it is turned off or not
 # installed. Without ~/.p10k.zsh, Powerlevel10k starts its `p10k configure`
 # wizard, which checks which icons this terminal can show; run it again any

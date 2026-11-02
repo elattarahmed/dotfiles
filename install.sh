@@ -60,6 +60,10 @@ ITEMS=(
 MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar whichport input-method lockscreen-layout neovim rust asm apps git-ssh ssh-server display)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
+# Every item that existed when the selection was saved: an item added to the
+# repo since then and on by default joins the selection on the next run,
+# while one the user turned off stays off.
+KNOWN_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/known-items"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"
 TODOS=()
 SELECTED=()
@@ -103,11 +107,17 @@ selected() { printf '%s\n' "${SELECTED[@]}" | grep -qxF -- "$1"; }
 explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -qxF -- "$1"; }
 
 saved_selection() {
+  local item id default
   if [[ -f $SELECTION_FILE ]]; then
     grep -v '^\s*\(#\|$\)' "$SELECTION_FILE" || true
-    return
+    # A selection saved before known-items existed knows every current item
+    [[ -f $KNOWN_FILE ]] || return 0
+    for item in "${ITEMS[@]}"; do
+      IFS='|' read -r id default _ <<<"$item"
+      [[ $default == on ]] && ! grep -qxF -- "$id" "$KNOWN_FILE" && echo "$id"
+    done
+    return 0
   fi
-  local item
   for item in "${ITEMS[@]}"; do
     IFS='|' read -r id default _ <<<"$item"
     [[ $default == on ]] && echo "$id"
@@ -210,6 +220,7 @@ mkdir -p "$(dirname "$SELECTION_FILE")"
   echo "# Éléments installés par $(pretty "$DOTFILES_DIR")/install.sh (un par ligne)"
   printf '%s\n' "${SELECTED[@]}"
 } >"$SELECTION_FILE"
+item_ids >"$KNOWN_FILE"
 
 if is_live && command -v hyprctl >/dev/null && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
   hyprctl reload >/dev/null

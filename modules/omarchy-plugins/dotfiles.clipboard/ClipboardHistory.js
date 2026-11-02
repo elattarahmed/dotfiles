@@ -235,9 +235,23 @@ function cappedEntry(entry) {
   return capped
 }
 
+// Space-separated words, all required, in any order, anywhere in the entry
+// (also inside one word: "github rea" finds https://github.com/morluto/rea).
+function searchWords(query) {
+  var words = String(query || "").trim().toLowerCase().split(/\s+/)
+  return words[0] === "" ? [] : words
+}
+
+function matchesWords(entry, words) {
+  if (words.length === 0) return true
+  var haystack = searchableText(entry).toLowerCase()
+  for (var w = 0; w < words.length; w++) if (haystack.indexOf(words[w]) < 0) return false
+  return true
+}
+
 function displayRows(history, query, limit) {
   var values = Array.isArray(history) ? history : []
-  var needle = String(query || "").trim().toLowerCase()
+  var words = searchWords(query)
   var max = limit === undefined || limit === null ? 50 : Number(limit)
   if (isNaN(max)) max = 50
   max = Math.max(0, max)
@@ -263,7 +277,7 @@ function displayRows(history, query, limit) {
     var i = order[o]
     var entry = cappedEntry(normalizeEntry(values[i]))
     if (!entry) continue
-    if (needle && searchableText(entry).toLowerCase().indexOf(needle) < 0) continue
+    if (!matchesWords(entry, words)) continue
 
     var paths = filePaths(entry)
     var isFile = paths.length > 0
@@ -298,6 +312,8 @@ if (typeof module !== "undefined") {
     clearHistory: clearHistory,
     parseEntryJson: parseEntryJson,
     searchableText: searchableText,
+    searchWords: searchWords,
+    matchesWords: matchesWords,
     previewText: previewText,
     imagePreviewText: imagePreviewText,
     filePaths: filePaths,

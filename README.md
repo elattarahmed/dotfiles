@@ -110,6 +110,8 @@ Dans un terminal, ces touches Alt arrivent telles quelles à zsh, qui a ses prop
 | Alt+A, Alt+B… | remettre dans le presse-papiers l'élément épinglé à cette lettre |
 | Alt+1…9 | remettre dans le presse-papiers l'un des 9 derniers éléments |
 
+La recherche accepte plusieurs mots séparés par des espaces : un élément s'affiche s'il les contient tous, dans n'importe quel ordre, même au milieu d'un mot (`github rea` trouve `https://github.com/morluto/rea`). Les majuscules ne comptent pas.
+
 Les éléments épinglés restent en haut de la liste et gardent leur lettre. Désactiver `clipboard` les perd (le gestionnaire d'Omarchy ne connaît pas les épingles) : le script garde avant une copie de l'historique dans ses sauvegardes. Ils ne sont jamais effacés automatiquement, même quand on vide l'historique (Suppr les supprime un par un).
 
 **Neovim (`neovim-themes`)**

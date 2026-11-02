@@ -1,7 +1,7 @@
 # Omarchy theme. Omarchy's own commands switch everything at once (terminal,
 # bar, lock screen, wallpaper…). Extra themes come from their git repos, plus
 # the wallpapers added to them here (backgrounds/<theme>/).
-# Item: theme
+# Items: theme, hyde-themes (themes from the HyDE gallery, converted by hyde-theme)
 
 # Themes cloned from git, then the one in use and its wallpaper
 THEME_REPOS=(
@@ -11,7 +11,23 @@ THEME_REPOS=(
 THEME_NAME="black_arch"
 THEME_BACKGROUND="14-dot-hands.jpg"
 
+# HyDE gallery themes installed with hyde-themes (names as in `hyde-theme list`).
+# Each is downloaded and converted on install; its wallpapers stay out of the repo.
+HYDE_THEMES=()
+
 module_theme() {
+  if selected hyde-themes; then
+    info "Thèmes HyDE"
+    install_file "$DOTFILES_DIR/modules/theme/hyde-theme" "$HOME/.local/bin/hyde-theme" 755
+    if is_live && ((${#HYDE_THEMES[@]})); then
+      "$DOTFILES_DIR/modules/theme/hyde-theme" install --missing "${HYDE_THEMES[@]}" || warn "certains thèmes HyDE n'ont pas pu être installés"
+    fi
+  elif [[ -L $HOME/.local/bin/hyde-theme || -f $HOME/.local/bin/hyde-theme ]] && grep -q "HyDE gallery" "$HOME/.local/bin/hyde-theme" 2>/dev/null; then
+    # The converted themes themselves are kept: they are ordinary themes now
+    rm -f "$HOME/.local/bin/hyde-theme"
+    ok "hyde-theme retiré"
+  fi
+
   selected theme || return 0
   info "Thème"
   local themes="$HOME/.config/omarchy/themes"

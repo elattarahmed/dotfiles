@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""Install themes from the HyDE gallery as Omarchy themes.
+
+  hyde-theme list [--refresh]          themes of the gallery
+  hyde-theme install NAME... [--set] [--missing]
+                                       download and convert (--set applies the
+                                       last one, --missing skips installed ones)
+  hyde-theme remove NAME...            delete converted themes
+  hyde-theme installed                 converted themes on this machine
+
+HyDE themes (github.com/HyDE-Project/hyde-gallery) each live in their own
+repo. Only the theme's folder is downloaded. Its terminal palette
+(kitty.theme), active border color (hypr.theme) and dark/light mode
+(theme.dcol) become Omarchy's colors.toml, its wallpapers the theme's
+backgrounds, and the gallery screenshot its preview. Omarchy generates
+everything else (terminal, bar, btop, Neovim…) from colors.toml.
+
+Converted themes go in ~/.config/omarchy/themes/hyde-<name>, so they never
+replace one of Omarchy's own themes with the same name.
+"""
+
+import colorsys
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import unicodedata
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+GALLERY = "HyDE-Project/hyde-gallery"
+GALLERY_RAW = f"https://raw.githubusercontent.com/{GALLERY}/master"
+CACHE = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "hyde-theme"
+THEMES = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "omarchy" / "themes"
+PREFIX = "hyde-"
+IMAGES = {".jpg", ".jpeg", ".png", ".webp"}
+
+
+def die(message):
+    print(f"hyde-theme: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def plain(name):
+    """Lowercase, without accents, words split by spaces: "Rosé-Pine" -> "rose pine"."""
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", " ", ascii_name.lower()).strip()
+
+
+def slug(name):
+    return PREFIX + plain(name).replace(" ", "-")
+
+
+# --- Gallery ---------------------------------------------------------------
+
+def gallery(refresh=False):
+    """[{name, description, url, preview}] from the gallery README."""
+    CACHE.mkdir(parents=True, exist_ok=True)
+    readme = CACHE / "README.md"
+    if refresh or not readme.exists():
+        with urllib.request.urlopen(f"{GALLERY_RAW}/README.md", timeout=30) as response:
+            readme.write_bytes(response.read())
+    text = readme.read_text(encoding="utf-8")
+
+    descriptions = {}
+    for match in re.finditer(r"^\| \[!\[([^\]]+)\][^|]*\| ([^|]*) \|", text, re.M):
+        descriptions[match.group(1).strip()] = match.group(2).strip()
+
+    themes = []
+    for match in re.finditer(r"^### \d+\. (.+?)\s*$(.*?)(?=^### |\Z)", text, re.M | re.S):
+        name, body = match.group(1).strip(), match.group(2)
+        link = re.search(r"\[!\[[^\]]*\]\(([^)]+)\)\]\((https://github\.com/[^)\s]+)\)", body)
+        if not link:
+            continue
+        themes.append({
+            "name": name,
+            "description": descriptions.get(name, ""),
+            "preview": link.group(1),
+            "url": link.group(2),
+        })
+    return themes
+
+
+def find(themes, name):
+    wanted = plain(name.removeprefix(PREFIX))
+    for theme in themes:
+        if plain(theme["name"]) == wanted:
+            return theme
+    close = [t["name"] for t in themes if wanted in plain(t["name"])]
+    hint = f" (peut-être : {', '.join(close)})" if close else " (voir hyde-theme list)"
+    die(f"thème introuvable dans la galerie : {name}{hint}")
+
+
+# --- Download --------------------------------------------------------------
+
+def git(*args, cwd=None):
+    return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
+                          capture_output=True).stdout
+
+
+def fetch(url, workdir):
+    """Clone just the theme folder; returns the folder holding its .theme files."""
+    parts = urllib.parse.urlparse(url).path.strip("/").split("/")
+    repo = f"https://github.com/{parts[0]}/{parts[1]}.git"
+    branch = urllib.parse.unquote(parts[3]) if len(parts) > 3 and parts[2] == "tree" else None
+    subpath = "/".join(urllib.parse.unquote(p) for p in parts[4:]) if branch else ""
+
+    clone = workdir / "repo"
+    args = ["clone", "--quiet", "--depth", "1", "--filter=blob:none", "--no-checkout"]
+    if branch:
+        args += ["--branch", branch]
+    git(*args, repo, str(clone))
+
+    # The tree is known without downloading any file: pick the theme folder
+    files = git("-c", "core.quotePath=false", "ls-tree", "-r", "--name-only", "HEAD", cwd=clone).splitlines()
+    candidates = sorted({str(Path(f).parent) for f in files
+                         if Path(f).name in ("kitty.theme", "theme.dcol", "hypr.theme")
+                         and f.startswith(subpath)})
+    if not candidates:
+        die(f"pas de thème HyDE dans {url}")
+    # Prefer the classic Configs/.config/hyde/themes/<Name> layout
+    candidates.sort(key=lambda d: ("/hyde/themes/" not in d, len(d)))
+    folder = candidates[0]
+
+    git("sparse-checkout", "set", "--no-cone", f"/{folder}/", cwd=clone)
+    git("checkout", "--quiet", cwd=clone)
+    return clone / folder
+
+
+# --- Colors ----------------------------------------------------------------
+
+def hex_color(value):
+    value = value.strip().strip('"')
+    m = re.fullmatch(r"#?([0-9a-fA-F]{6})(?:[0-9a-fA-F]{2})?", value)
+    if m:
+        return "#" + m.group(1).lower()
+    m = re.fullmatch(r"rgba?\(\s*([0-9a-fA-F]{6})(?:[0-9a-fA-F]{2})?\s*\)", value)
+    if m:
+        return "#" + m.group(1).lower()
+    return None
+
+
+def rgb(color):
+    return tuple(int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+
+
+def mix(a, b, amount):
+    """amount of b into a."""
+    ra, rb = rgb(a), rgb(b)
+    return "#" + "".join(f"{round((x + (y - x) * amount) * 255):02x}" for x, y in zip(ra, rb))
+
+
+def luminance(color):
+    def channel(c):
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    r, g, b = (channel(c) for c in rgb(color))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def saturation(color):
+    return colorsys.rgb_to_hls(*rgb(color))[2]
+
+
+def read_kitty(path):
+    colors = {}
+    if not path.exists():
+        return colors
+    for line in path.read_text(errors="replace").splitlines():
+        m = re.match(r"^\s*([a-z_0-9]+)\s+(#[0-9a-fA-F]{6})\b", line)
+        if m:
+            colors[m.group(1)] = m.group(2).lower()
+    return colors
+
+
+def read_border(path):
+    if not path.exists():
+        return None
+    m = re.search(r"col\.active_border\s*=\s*(\S+)", path.read_text(errors="replace"))
+    return hex_color(m.group(1)) if m else None
+
+
+def read_dcol(path):
+    values = {}
+    if path.exists():
+        for line in path.read_text(errors="replace").splitlines():
+            m = re.match(r'^(dcol_[a-z0-9]+)="([^"]*)"', line)
+            if m:
+                values[m.group(1)] = m.group(2)
+    return values
+
+
+def palette(folder):
+    kitty = read_kitty(folder / "kitty.theme")
+    dcol = read_dcol(folder / "theme.dcol")
+
+    def d(key):
+        value = dcol.get(key)
+        return "#" + value.lower() if value and re.fullmatch(r"[0-9a-fA-F]{6}", value) else None
+
+    background = kitty.get("background") or d("dcol_pry1") or "#1e1e2e"
+    foreground = kitty.get("foreground") or d("dcol_txt1") or "#cdd6f4"
+    if "color1" in kitty:
+        ansi = [kitty.get(f"color{i}") for i in range(16)]
+    else:
+        # No terminal palette: build one from the wallpaper accents HyDE extracted
+        accents = [d(f"dcol_{p}xa{i}") for p in (1, 2, 3, 4) for i in (6, 7, 8)]
+        accents = [a for a in accents if a] or [foreground]
+        base = [mix(background, "#000000", 0.3)] + [accents[i % len(accents)] for i in range(6)] + [foreground]
+        ansi = base + base
+    ansi = [c or foreground for c in ansi]
+
+    # Accent: the theme's own border color when it has one, else a colorful ANSI one
+    border = read_border(folder / "hypr.theme")
+    choices = [border, kitty.get("active_tab_background"), ansi[4], ansi[12], ansi[5], ansi[6], ansi[2]]
+    accent = next((c for c in choices if c and saturation(c) > 0.2), ansi[12])
+
+    mode = dcol.get("dcol_mode") or ("light" if luminance(background) > 0.4 else "dark")
+    selection = kitty.get("selection_background") or mix(background, foreground, 0.25)
+    if abs(luminance(selection) - luminance(foreground)) < 0.1:
+        # Inverted selections (text color as background) read badly in Omarchy
+        selection = mix(background, foreground, 0.25)
+    orange = mix(ansi[1], ansi[3], 0.5)
+
+    return {
+        "mode": "light" if mode == "light" else "dark",
+        "accent": accent,
+        "selection": selection,
+        "muted": ansi[8],
+        "background": background,
+        "dark_background": mix(background, "#000000", 0.25),
+        "darker_background": mix(background, "#000000", 0.45),
+        "lighter_background": mix(background, foreground, 0.12),
+        "foreground": foreground,
+        "dark_foreground": mix(foreground, background, 0.45),
+        "light_foreground": mix(foreground, background, 0.15),
+        "bright_foreground": ansi[15],
+        "red": ansi[1], "yellow": ansi[3], "orange": orange, "green": ansi[2],
+        "cyan": ansi[6], "blue": ansi[4], "magenta": ansi[5],
+        "brown": mix(orange, background, 0.45),
+        "bright_red": ansi[9], "bright_yellow": ansi[11], "bright_green": ansi[10],
+        "bright_cyan": ansi[14], "bright_blue": ansi[12], "bright_magenta": ansi[13],
+    }
+
+
+def colors_toml(colors, theme):
+    groups = [("mode",), ("accent", "selection", "muted"),
+              ("background", "dark_background", "darker_background", "lighter_background"),
+              ("foreground", "dark_foreground", "light_foreground", "bright_foreground"),
+              ("red", "yellow", "orange", "green", "cyan", "blue", "magenta", "brown"),
+              ("bright_red", "bright_yellow", "bright_green", "bright_cyan", "bright_blue", "bright_magenta")]
+    lines = [f"# Converted by hyde-theme from the HyDE theme {theme['name']}",
+             f"# {theme['url']}", ""]
+    for group in groups:
+        lines += [f'{key} = "{colors[key]}"' for key in group] + [""]
+    return "\n".join(lines)
+
+
+# --- Install ---------------------------------------------------------------
+
+def download(url, dest):
+    with urllib.request.urlopen(url, timeout=60) as response:
+        dest.write_bytes(response.read())
+
+
+def install(theme):
+    dest = THEMES / slug(theme["name"])
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        folder = fetch(theme["url"], tmp)
+        colors = palette(folder)
+
+        staging = tmp / "theme"
+        backgrounds = staging / "backgrounds"
+        backgrounds.mkdir(parents=True)
+        (staging / "colors.toml").write_text(colors_toml(colors, theme))
+
+        count = 0
+        for image in sorted((folder / "wallpapers").glob("*")) if (folder / "wallpapers").is_dir() else []:
+            if image.suffix.lower() in IMAGES and image.is_file() and not image.is_symlink():
+                shutil.copy(image, backgrounds / re.sub(r"\s+", "-", image.name))
+                count += 1
+        if not count:
+            print(f"  ! {theme['name']} : pas de fond d'écran dans le thème", file=sys.stderr)
+
+        preview = tmp / ("preview" + Path(theme["preview"]).suffix)
+        try:
+            download(f"{GALLERY_RAW}/{theme['preview']}", preview)
+            if preview.suffix.lower() == ".png":
+                shutil.copy(preview, staging / "preview.png")
+            elif shutil.which("magick"):
+                subprocess.run(["magick", f"{preview}[0]", str(staging / "preview.png")], check=True)
+        except Exception:
+            pass
+
+        if dest.exists():
+            shutil.rmtree(dest)
+        THEMES.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(staging, dest)
+    print(f"  ✓ {theme['name']} → {dest.name} ({count} fond{'s' if count > 1 else ''} d'écran, accent {colors['accent']})")
+    return dest.name
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        print(__doc__.strip())
+        return
+    command, args = argv[0], argv[1:]
+
+    if command == "list":
+        for theme in gallery(refresh="--refresh" in args):
+            mark = "✓" if (THEMES / slug(theme["name"])).exists() else " "
+            print(f"{mark} {theme['name']:<24} {theme['description'][:90]}")
+    elif command == "installed":
+        for path in sorted(THEMES.glob(PREFIX + "*")):
+            print(path.name)
+    elif command == "install":
+        apply = "--set" in args
+        missing_only = "--missing" in args
+        names = [a for a in args if a not in ("--set", "--missing")]
+        if not names:
+            die("install attend au moins un nom de thème")
+        themes = gallery()
+        installed = []
+        for name in names:
+            theme = find(themes, name)
+            if missing_only and (THEMES / slug(theme["name"])).exists():
+                continue
+            try:
+                installed.append(install(theme))
+            except subprocess.CalledProcessError as error:
+                print(f"  ! {name} : téléchargement impossible ({error.stderr.strip()[:200]})", file=sys.stderr)
+        if apply and installed:
+            subprocess.run(["omarchy", "theme", "set", installed[-1]], check=False)
+    elif command == "remove":
+        for name in args:
+            path = THEMES / (name if name.startswith(PREFIX) else slug(name))
+            if path.is_dir():
+                shutil.rmtree(path)
+                print(f"  ✓ {path.name} supprimé")
+            else:
+                print(f"  ! {path.name} n'est pas installé", file=sys.stderr)
+    else:
+        die(f"commande inconnue : {command} (hyde-theme --help)")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

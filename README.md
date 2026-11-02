@@ -20,6 +20,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 
 | Élément | Par défaut | Ce que ça fait |
 |---|---|---|
+| `hyde-themes` | ✓ | la commande `hyde-theme`, qui convertit les thèmes de la [galerie HyDE](https://github.com/HyDE-Project/hyde-gallery) (70 thèmes) en thèmes Omarchy : `hyde-theme list` pour les voir, `hyde-theme install "Bad Blood" --set` pour en installer un et l'appliquer, `hyde-theme remove …` pour le retirer. Seul le dossier du thème est téléchargé ; sa palette de terminal devient le `colors.toml` d'Omarchy (qui en déduit terminal, barre, btop, Neovim…), ses fonds d'écran et l'aperçu de la galerie suivent. Les thèmes s'appellent `hyde-…` pour ne pas remplacer ceux d'Omarchy. Ceux listés dans `HYDE_THEMES` (`modules/theme/module.sh`) s'installent avec le dépôt |
 | `theme` | ✓ | thème [Black_arch](https://github.com/ankur311sudo/black_arch) avec un fond d'écran en plus, dans `modules/theme/backgrounds/` (terminal, barre, écran de verrouillage). [Hermarchy](https://github.com/archer-clawbot/omarchy-hermarchy-theme) est installé aussi, à choisir dans le menu des thèmes |
 | `browser-brave` | ✓ | Brave comme navigateur par défaut (installé s'il manque) : un lien s'ouvre dans un nouvel onglet du Brave déjà ouvert |
 | `zsh` | ✓ | zsh comme shell par défaut, suggestions grisées (→ pour accepter), coloration syntaxique, alias et fonctions d'Omarchy |

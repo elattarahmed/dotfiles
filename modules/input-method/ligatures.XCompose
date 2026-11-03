@@ -1,0 +1,11 @@
+# Joined letters on the French layout, with AltGr:
+#   AltGr+O then E: œ        AltGr+Shift+O then E: Œ
+#   AltGr+A then E: æ        AltGr+Shift+A then E: Æ
+# AltGr+O / AltGr+A type ø / æ, which now wait for the next key. Uppercase
+# works whether Shift is still held for the E or not.
+<oslash> <e> : "œ" oe
+<Oslash> <E> : "Œ" OE
+<Oslash> <e> : "Œ" OE
+<ae> <e> : "æ" ae
+<AE> <E> : "Æ" AE
+<AE> <e> : "Æ" AE

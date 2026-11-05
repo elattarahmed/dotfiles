@@ -1,8 +1,9 @@
 # Neovim spell check in French and English (LazyVim turns spell on for text,
 # markdown and git commits, in English only: every French word got a red wave),
 # LazyVim's neo-tree file explorer extra, and a colorscheme picked on its own
-# whatever the Omarchy theme (<leader>uC or :Theme).
-# Items: neovim-spell, neovim-neotree, neovim-themes
+# whatever the Omarchy theme (<leader>uC or :Theme), and insert mode moves with
+# Ctrl/Alt + arrows like in a browser (the same keys as zsh).
+# Items: neovim-spell, neovim-neotree, neovim-themes, neovim-insert-keys
 
 module_neovim() {
   local choice="$HOME/.config/nvim/lua/plugins/theme-choice.lua"
@@ -11,8 +12,23 @@ module_neovim() {
     rm -f "$choice"
     ok "Neovim suit de nouveau le thème Omarchy"
   fi
-  selected neovim-spell || selected neovim-neotree || selected neovim-themes || return 0
+  local keys="$HOME/.config/nvim/plugin/insert-keys.lua"
+  if ! selected neovim-insert-keys && [[ -e $keys || -L $keys ]]; then
+    backup "$keys"
+    rm -f "$keys"
+    ok "Neovim · flèches du mode insertion remises par défaut"
+  fi
+  selected neovim-spell || selected neovim-neotree || selected neovim-themes ||
+    selected neovim-insert-keys || return 0
   info "Neovim"
+
+  if selected neovim-insert-keys; then
+    if [[ -d $HOME/.config/nvim ]]; then
+      install_file "$DOTFILES_DIR/modules/neovim/insert-keys.lua" "$keys"
+    else
+      warn "pas de config Neovim dans ~/.config/nvim : flèches du mode insertion ignorées"
+    fi
+  fi
 
   if selected neovim-themes; then
     if [[ -d $HOME/.config/nvim/lua/plugins ]]; then

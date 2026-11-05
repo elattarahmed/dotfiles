@@ -49,6 +49,7 @@ ITEMS=(
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
   "neovim-themes|on|Neovim · choisir son thème à part de celui d'Omarchy (<leader>uC ou :Theme)"
   "neovim-neotree|on|Neovim · explorateur de fichiers neo-tree (extra LazyVim)"
+  "neovim-insert-keys|on|Neovim · mode insertion · Ctrl+←/→ mot · Ctrl+↑/↓ paragraphe · Alt+←/→ début/fin de ligne · Alt+↑/↓ début/fin du fichier"
   "rust|on|Rust · rustup stable avec clippy/rustfmt/rust-analyzer · Rustlings · LazyVim Rust"
   "asm|on|Assembleur x86-64 · NASM, gdb + pwndbg, binutils, strace/ltrace (roadmap ESGI)"
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"

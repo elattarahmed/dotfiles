@@ -59,7 +59,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `neovim-spell` | ✓ | correcteur orthographique de Neovim en français et en anglais |
 | `neovim-neotree` | ✓ | explorateur de fichiers neo-tree dans Neovim (extra LazyVim) |
 | `neovim-themes` | ✓ | thème de Neovim choisi à part de celui d'Omarchy, et gardé : `<leader>uC` (Espace, u, Maj+C) ou `:Theme` ouvre la liste avec aperçu en direct, Entrée garde le thème, `:Theme omarchy` revient au thème Omarchy. Le thème VS Code (`vscode`) est ajouté à la liste |
-| `neovim-insert-keys` | ✓ | en mode insertion, Ctrl et Alt + flèches déplacent le curseur comme dans un navigateur, avec les mêmes touches que zsh (voir plus bas) |
+| `neovim-insert-keys` | ✓ | en mode insertion, Ctrl et Alt + flèches déplacent le curseur et Ctrl et Alt + Effacer/Suppr effacent comme dans un navigateur, avec les mêmes touches que zsh (voir plus bas) |
 | `apps` | ✓ | applications en terminal : `tree` (arborescence d'un dossier), `glow` (Markdown mis en forme), `pacseek` (chercher et installer des paquets, AUR compris) |
 | `rust` | ✓ | Rust stable par rustup (`omarchy install dev-env rust`) avec clippy, rustfmt, rust-analyzer, rust-src et la doc hors ligne (`rustup doc --std`), [Rustlings](https://github.com/rust-lang/rustlings), et l'extra Rust de LazyVim (rustaceanvim, crates.nvim, débogueur codelldb installé par Mason au premier lancement) |
 | `asm` | ✓ | Assembleur x86-64 pour la roadmap ESGI : NASM, gdb + pwndbg, binutils (objdump/readelf), strace et ltrace. Le dépôt `asm-roadmap` lui-même se crée avec `init-asm-roadmap.sh` dans le dossier ESGI |
@@ -132,8 +132,11 @@ Les éléments épinglés restent en haut de la liste et gardent leur lettre. D�
 | Alt+← | début de la ligne : d'abord après l'indentation, puis tout au début |
 | Alt+→ | fin de la ligne |
 | Alt+↑ / ↓ | début / fin du fichier |
+| Ctrl+Effacer / Ctrl+Suppr | effacer le mot avant / après |
+| Alt+Effacer | effacer jusqu'au début de la ligne : d'abord jusqu'à l'indentation, puis tout |
+| Alt+Suppr | effacer jusqu'à la fin de la ligne |
 
-Un mot est une suite de lettres et de chiffres (accents compris) ou une suite de ponctuation. En mode normal, Ctrl+flèches redimensionne toujours les fenêtres (LazyVim).
+Un mot est une suite de lettres et de chiffres (accents compris) ou une suite de ponctuation. L'effacement reste sur la ligne : en début (ou en fin) de ligne, il la colle seulement à la précédente (ou à la suivante), comme Effacer (ou Suppr). En mode normal, Ctrl+flèches redimensionne toujours les fenêtres (LazyVim).
 
 **zsh et Ghostty**
 

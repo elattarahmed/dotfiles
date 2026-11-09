@@ -1,8 +1,9 @@
 # Neovim spell check in French and English (LazyVim turns spell on for text,
 # markdown and git commits, in English only: every French word got a red wave),
 # LazyVim's neo-tree file explorer extra, and a colorscheme picked on its own
-# whatever the Omarchy theme (<leader>uC or :Theme), and insert mode moves with
-# Ctrl/Alt + arrows like in a browser (the same keys as zsh).
+# whatever the Omarchy theme (<leader>uC or :Theme), and insert mode moves and
+# deletes with Ctrl/Alt + arrows/Backspace/Delete like in a browser (the same
+# keys as zsh).
 # Items: neovim-spell, neovim-neotree, neovim-themes, neovim-insert-keys
 
 module_neovim() {

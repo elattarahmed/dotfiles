@@ -8,8 +8,11 @@ THEME_REPOS=(
   https://github.com/ankur311sudo/black_arch.git
   https://github.com/archer-clawbot/omarchy-hermarchy-theme.git
 )
-THEME_NAME="black_arch"
-THEME_BACKGROUND="14-dot-hands.jpg"
+THEME_NAME="hyde-oxo-carbon"
+THEME_BACKGROUND="pony.jpg"
+# When the theme in use comes from the HyDE gallery: its name in `hyde-theme
+# list`, so the theme item installs it even without hyde-themes
+THEME_HYDE="Oxo Carbon"
 
 # HyDE gallery themes installed with hyde-themes (names as in `hyde-theme list`).
 # Each is downloaded and converted on install; its wallpapers stay out of the repo.
@@ -41,6 +44,11 @@ module_theme() {
       omarchy theme install "$url" >/dev/null 2>&1 && ok "thème $name installé" || warn "impossible d'installer le thème $name ($url)"
     fi
   done
+
+  if [[ -n $THEME_HYDE && ! -d $themes/$THEME_NAME ]] && is_live; then
+    "$DOTFILES_DIR/modules/theme/hyde-theme" install --missing "$THEME_HYDE" >/dev/null 2>&1 &&
+      ok "thème $THEME_NAME installé" || warn "impossible d'installer le thème HyDE $THEME_HYDE"
+  fi
 
   local dir="$DOTFILES_DIR/modules/theme/backgrounds" file
   for file in "$dir"/*/*; do

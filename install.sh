@@ -10,7 +10,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
   "hyde-themes|on|Thèmes de la galerie HyDE convertis pour Omarchy (commande hyde-theme)"
-  "theme|on|Thème Black_arch (et Hermarchy installé) avec un fond d'écran en plus"
+  "theme|on|Thème Oxo Carbon (galerie HyDE) · Black_arch et Hermarchy installés aussi"
   "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"

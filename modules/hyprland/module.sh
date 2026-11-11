@@ -12,6 +12,7 @@ HYPR_FEATURES=(
   "natural-scroll|natural_scroll|Touchpad: natural (macOS) scrolling, slower"
   "touchscreen-off|touchscreen_off|Touchscreen turned off"
   "caps-lock|caps_lock|Real Caps Lock, Compose on Right Ctrl"
+  "ligatures|ligatures|AltGr+O types œ (AltGr+Shift+O: Œ) instead of ø"
   "zoom|zoom|3-finger click, then swipe up/down: zoom like macOS"
   "workspace-animation|workspace_animation|Slide between workspaces"
   "no-middle-paste|no_middle_paste|Middle click (3-finger tap) doesn't paste"

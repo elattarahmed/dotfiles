@@ -1,0 +1,5 @@
+// The system's rules plus the dotfiles' own options (symbols/dotfiles).
+! include %S/evdev
+
+! option = symbols
+  dotfiles:oe = +dotfiles(oe)

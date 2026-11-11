@@ -4,8 +4,9 @@
 # the apps handle dead keys (^ ¨) and Compose themselves.
 # Item: no-fcitx
 #
-# ligatures.XCompose adds AltGr+O/A then E for œ/æ (Shift for Œ/Æ). It is
-# included from ~/.XCompose, which stays the user's own file.
+# xkb/ adds the dotfiles:oe keyboard option (AltGr+O types œ, AltGr+Shift+O Œ;
+# AltGr+A is already æ on the French layout). The ligatures Hyprland feature
+# turns the option on; Hyprland hands the keymap to every app.
 # Item: ligatures
 
 module_input_method() {
@@ -14,28 +15,48 @@ module_input_method() {
 }
 
 input_method_ligatures() {
-  local src="$DOTFILES_DIR/modules/input-method/ligatures.XCompose"
+  local src="$DOTFILES_DIR/modules/input-method/xkb"
+  local xkb="${XDG_CONFIG_HOME:-$HOME/.config}/xkb"
+  local file
+
+  input_method_drop_old_compose
+
+  if selected ligatures; then
+    info "Ligatures : AltGr+O → œ · AltGr+A → æ (avec Maj : Œ Æ)"
+    for file in rules/evdev symbols/dotfiles; do
+      install_file "$src/$file" "$xkb/$file"
+    done
+    # hypr/dotfiles.lua was written before these files existed: rebuild the keymap
+    if is_live && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+      hyprctl reload >/dev/null && ok "disposition clavier rechargée"
+    fi
+  else
+    for file in rules/evdev symbols/dotfiles; do
+      if [[ -L $xkb/$file && $(readlink "$xkb/$file") == "$src/$file" ]] ||
+        { [[ -f $xkb/$file ]] && cmp -s "$src/$file" "$xkb/$file"; }; then
+        rm -f "$xkb/$file"
+        ok "$(pretty "$xkb/$file") supprimé"
+      fi
+    done
+  fi
+}
+
+# The first version typed œ through a Compose sequence included from
+# ~/.XCompose. It made AltGr+A wait for the next key, so remove it.
+input_method_drop_old_compose() {
   local dest="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/ligatures.XCompose"
   local xcompose="$HOME/.XCompose"
   local include="include \"$dest\""
   local comment="# Joined letters from the dotfiles repo (./install.sh --disable ligatures to drop them)"
   local kept
 
-  if selected ligatures; then
-    info "Ligatures : AltGr+O puis E → œ · AltGr+A puis E → æ"
-    install_file "$src" "$dest"
-    ensure_block "$xcompose" "$include" "$comment
-$include"
-    is_live && todo "relancer les applis ouvertes pour qu'elles connaissent œ et æ (AltGr+O ou AltGr+A, puis E)"
-  elif [[ -f $xcompose ]] && grep -qxF -- "$include" "$xcompose"; then
-    info "Ligatures retirées"
-    backup "$xcompose"
-    # Drop exactly our two lines, keep the rest of the user's file
-    kept=$(grep -vxF -e "$comment" -e "$include" "$xcompose" || true)
-    printf '%s\n' "$kept" >"$xcompose"
-    rm -f "$dest"
-    ok "$(pretty "$xcompose")"
-  fi
+  [[ -L $dest || -f $dest ]] && rm -f "$dest"
+  [[ -f $xcompose ]] && grep -qxF -- "$include" "$xcompose" || return 0
+  backup "$xcompose"
+  # Drop exactly those two lines, keep the rest of the user's file
+  kept=$(grep -vxF -e "$comment" -e "$include" "$xcompose" || true)
+  printf '%s\n' "$kept" >"$xcompose"
+  ok "$(pretty "$xcompose") : ancienne séquence œ retirée"
 }
 
 input_method_fcitx() {

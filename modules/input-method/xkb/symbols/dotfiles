@@ -1,0 +1,6 @@
+// AltGr+O types œ (AltGr+Shift+O: Œ) instead of ø / Ø, as on the French oss
+// layout; the rest of the layout is untouched. Option dotfiles:oe.
+partial alphanumeric_keys
+xkb_symbols "oe" {
+    key <AD09> { [ o, O, oe, OE ] };
+};

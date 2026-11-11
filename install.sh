@@ -44,7 +44,7 @@ ITEMS=(
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "interstellar-bar|on|Barre et notifications aux couleurs Interstellar · VPN / IP locale / IP publique · titre de la fenêtre"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
-  "ligatures|on|AltGr+O puis E → œ · AltGr+A puis E → æ (avec Maj : Œ Æ)"
+  "ligatures|on|AltGr+O → œ au lieu de ø · AltGr+A → æ (avec Maj : Œ Æ)"
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
   "apps|on|Applications en terminal · tree · glow (Markdown) · pacseek (recherche de paquets)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"

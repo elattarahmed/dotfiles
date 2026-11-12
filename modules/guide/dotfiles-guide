@@ -1,0 +1,29 @@
+#!/bin/bash
+# Shows the dotfiles guide (GUIDE.md): Neovim theme, GitHub accounts,
+# wallpaper, disk unlock screen, screensaver…
+#   dotfiles-guide            the whole guide
+#   dotfiles-guide <word>     only the parts whose title holds that word
+#                             (nvim, github, fond, hyde, plymouth, économiseur…)
+
+guide="${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/GUIDE.md"
+[[ -f $guide ]] || { echo "dotfiles-guide : $guide introuvable (relance ./install.sh)" >&2; exit 1; }
+
+text=$(cat "$guide")
+if (($#)); then
+  # Keep the "## " sections whose title or body matches
+  text=$(awk -v q="$*" '
+    BEGIN { IGNORECASE = 1 }
+    /^## / { if (sec != "" && sec ~ q) printf "%s", sec; sec = "" }
+    { sec = sec $0 "\n" }
+    END { if (sec ~ q) printf "%s", sec }
+  ' "$guide")
+  [[ -n $text ]] || { echo "Rien sur « $* » dans le guide. dotfiles-guide sans argument pour tout lire." >&2; exit 1; }
+fi
+
+if command -v glow >/dev/null; then
+  glow -p -w 100 - <<<"$text"
+elif [[ -t 1 ]]; then
+  less -R <<<"$text"
+else
+  printf '%s\n' "$text"
+fi

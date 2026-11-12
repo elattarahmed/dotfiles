@@ -12,7 +12,9 @@ cd dotfiles
 ./install.sh
 ```
 
-Un menu liste tous les éléments. Ceux par défaut sont déjà cochés : **x** (ou **Tab**) coche ou décoche, **Ctrl+A** coche tout, **Entrée** valide. La barre d'espace ne fait rien dans ce menu. Le script demande ton mot de passe sudo quand il installe des paquets. À la fin, il affiche ce qui reste à faire de ton côté, par exemple se déconnecter pour passer à zsh, ou ajouter une clé SSH sur GitHub.
+Un menu liste tous les éléments. Ceux par défaut sont déjà cochés : **x** (ou **Tab**) coche ou décoche, **Ctrl+A** coche tout, **Entrée** valide. La barre d'espace ne fait rien dans ce menu. Le script demande ton mot de passe sudo quand il installe des paquets. À la fin, il affiche ce qui reste à faire de ton côté, par exemple se déconnecter pour passer à zsh, ou ajouter une clé SSH sur GitHub, puis comment personnaliser le reste.
+
+**Tutoriel complet** (thème de Neovim, comptes GitHub, fond d'écran et thèmes HyDE, écran de déverrouillage du disque, économiseur d'écran) : [GUIDE.md](GUIDE.md), ou la commande `dotfiles-guide` une fois installé (`dotfiles-guide plymouth` pour une seule partie).
 
 Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/backups/<date>/`. Relancer le script ne change que ce qui a changé dans le dépôt.
 
@@ -51,6 +53,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `emojis` | ✓ | sélecteur d'émojis (Ctrl+Alt+Espace) où l'émoji sélectionné a une bordure claire, bien visible sur un thème sombre |
 | `scale-button` | ✓ | bouton dans la barre avec l'échelle de l'écran (125 %…) : molette vers le haut ou clic gauche pour agrandir, vers le bas ou clic droit pour réduire. La valeur est gardée après un redémarrage |
 | `sysstats` | ✓ | RAM, CPU ou température dans la barre |
+| `airpods` | ✓ | [AirPods dans la barre](https://github.com/SotoAugusto/omarchy-airpods) : batterie de chaque écouteur et du boîtier, réduction de bruit / transparence, détection d'oreille. Installe le démon `airpods-tui-bin` (AUR), met le DeviceID Apple dans `/etc/bluetooth/main.conf` (demande le mot de passe sudo) puis il faut réappairer les AirPods une fois. Le plugin reste un clone git : `omarchy plugin update` le met à jour |
 | `whichport` | | [whichport](https://github.com/elattarahmed/whichport) : les serveurs de dev qui tournent, dans la barre |
 | `bar-layout` | ✓ | barre transparente, langue du clavier avant l'horloge, icônes d'applis après le réseau |
 | `interstellar-bar` | ✓ | le rice waybar « Interstellar » sur la barre d'Omarchy : ses couleurs (fond bleu nuit à 92 %, texte crème, bordures cyan, rouge d'alerte) pour la barre, ses popups et les notifications seulement, le thème reste le même (`~/.config/omarchy/shell.toml`). Ajoute le titre de la fenêtre active et trois modules : VPN (rouge sans VPN), IP locale et IP publique avec le pays (api.ipify.org et ipapi.co toutes les 5 min) ; un clic copie l'adresse. La barre devient opaque, même avec `bar-layout` |
@@ -201,18 +204,19 @@ Les fichiers Hyprland d'Omarchy (`bindings.lua`, `input.lua`, `looknfeel.lua`…
 
 ## Plusieurs comptes GitHub (`git-ssh`)
 
-Le script demande un alias par compte (par défaut `perso` et `pro`), puis pour chacun un nom et un email. Il crée ensuite :
+Les questions arrivent dès le début, juste après le menu. Pour chaque compte, le script demande un alias (`hmd` ou `github-hmd`, c'est le même), un nom et un email, puis propose d'en ajouter un autre. Il crée :
 
-- une clé SSH par compte, `~/.ssh/id_ed25519_<alias>` ;
+- une clé SSH par compte, `~/.ssh/id_ed25519_github-<alias>` (la clé publique est affichée et copiée) ;
 - un hôte `github-<alias>` dans `~/.ssh/config` ;
-- l'identité git du compte, choisie d'après l'URL du dépôt.
+- l'identité git du compte, `~/.config/git/github-<alias>`, choisie d'après l'URL du remote.
 
-Il ne te reste qu'à coller chaque clé publique (`cat ~/.ssh/id_ed25519_<alias>.pub`) dans le bon compte GitHub : **Settings → SSH and GPG keys**. Ensuite :
+Il ne te reste qu'à coller chaque clé publique dans le bon compte GitHub (https://github.com/settings/ssh/new). Ensuite :
 
 ```bash
-ssh -T github-perso                                    # → « Hi <compte> ! »
-git clone git@github-perso:<compte>/<repo>.git
-git remote set-url origin git@github-pro:<org>/<repo>.git   # pour un repo déjà cloné
+ssh -T github-hmd                                   # → « Hi <compte> ! »
+git clone git@github-hmd:<compte>/<repo>.git        # le repo garde ce compte pour ses commits
+git remote set-url origin git@github-hmd:<org>/<repo>.git   # pour un repo déjà cloné
+./install.sh git-ssh                                # ajouter un compte
 ```
 
 Un repo cloné sans alias n'a pas d'identité : git refuse de commiter plutôt que d'en deviner une.

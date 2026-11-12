@@ -40,6 +40,7 @@ ITEMS=(
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
   "scale-button|on|Barre · taille de l'affichage (molette ou clic pour agrandir/réduire)"
   "sysstats|on|Barre · RAM / CPU / température (clic pour passer de l'un à l'autre)"
+  "airpods|on|Barre · AirPods (batterie · réduction de bruit · détection d'oreille) avec le démon airpods-tui"
   "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "interstellar-bar|on|Barre et notifications aux couleurs Interstellar · VPN / IP locale / IP publique · titre de la fenêtre"
@@ -59,7 +60,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(theme browser zsh ghostty hyprland zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar whichport input-method lockscreen-layout neovim rust asm apps git-ssh ssh-server display)
+MODULES=(git-ssh theme browser zsh ghostty hyprland zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 # Every item that existed when the selection was saved: an item added to the
@@ -240,3 +241,19 @@ if ((${#TODOS[@]})); then
   echo "À faire de ton côté :"
   printf '  • %s\n' "${TODOS[@]}"
 fi
+
+# How to change what was just installed; the details are in dotfiles-guide
+TIPS=()
+selected neovim-themes && TIPS+=("Thème de Neovim : <leader>uC ou :Theme (aperçu, Entrée pour garder) · :Theme omarchy pour suivre Omarchy")
+selected git-ssh && TIPS+=("Cloner avec un compte : git clone git@github-<alias>:<owner>/<repo>.git (le repo garde ce compte) · ./install.sh git-ssh pour en ajouter un")
+TIPS+=("Fond d'écran : Super+Ctrl+Espace · omarchy theme bg set <image>")
+selected hyde-themes && TIPS+=("Thèmes et fonds HyDE : hyde-theme list, puis hyde-theme install \"<Nom>\" --set")
+TIPS+=("Écran de déverrouillage du disque : menu Super+Espace → Appearance → Unlock · omarchy plymouth list")
+if selected screensaver; then
+  TIPS+=("Économiseur : omarchy launch screensaver force pour le voir · screensaver-text set \"Texte\" pour le changer")
+else
+  TIPS+=("Économiseur : omarchy launch screensaver force pour le voir · Super+Espace → Appearance → Branding → Screensaver")
+fi
+echo
+echo "Pour personnaliser (tutoriel complet : dotfiles-guide, ou dotfiles-guide <sujet>) :"
+printf '  • %s\n' "${TIPS[@]}"

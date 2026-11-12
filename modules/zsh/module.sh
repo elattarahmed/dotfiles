@@ -36,6 +36,9 @@ EOF
     else
       warn "chsh a échoué, lance : chsh -s /usr/bin/zsh"
     fi
+  elif [[ ${SHELL:-} != */zsh ]]; then
+    # chsh done, but this session started before it: $SHELL still says bash
+    todo "zsh est ton shell, mais la session a démarré avant : Ghostty ouvre déjà zsh, déconnecte-toi puis reconnecte-toi pour le reste."
   fi
 
   if selected zsh-root && ! can_sudo; then

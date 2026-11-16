@@ -163,12 +163,14 @@ Un mot est une suite de lettres et de chiffres (accents compris) ou une suite de
 
 ```bash
 ./install.sh                         # le menu, avec tes choix actuels cochés
-./install.sh zoom sysstats           # ajouter des éléments
-./install.sh --disable macos-keys    # en retirer
+./install.sh zoom sysstats           # ajouter des éléments (seulement eux sont installés)
+./install.sh --disable macos-keys    # en retirer (seulement eux)
 ./install.sh --yes                   # tout réappliquer sans question
 ./install.sh --files-only            # copier les fichiers seulement : ni paquets, ni sudo, ni session
 ./install.sh --link                  # des liens vers le dépôt au lieu de copies (voir plus bas)
 ```
+
+Avec des éléments nommés (`./install.sh zoom`, `--disable …`), le script ne lance que les modules qui les concernent : le reste de ta config n'est ni réinstallé ni retouché, et il n'y a ni paquets ni sudo pour les autres éléments. Le menu, `--yes` et `--all` repassent sur tout.
 
 Tes choix sont enregistrés dans `~/.config/dotfiles/selection`. Pour couper un réglage à la main, sans relancer le script :
 

@@ -65,6 +65,10 @@ ITEMS=(
 # Modules in the order they run. Each one reads `selected <id>` for its items.
 MODULES=(git-ssh theme browser zsh ghostty hyprland adaptive-refresh touchpad-reset zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
+# Modules that run even when only some items are asked for (cheap, and they
+# keep the guide in step with the repo)
+ALWAYS_MODULES=(guide)
+
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 # Every item that existed when the selection was saved: an item added to the
 # repo since then and on by default joins the selection on the next run,
@@ -73,6 +77,9 @@ KNOWN_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/known-items"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"
 TODOS=()
 RELOGIN=()
+# Items named on the command line (to install or to --disable): only the
+# modules that handle them run. Empty: every module runs.
+TARGETS=()
 SELECTED=()
 EXPLICIT=()
 
@@ -83,8 +90,9 @@ Usage: ./install.sh [options] [élément...]
 Sans argument, un menu propose chaque élément (cochés : ceux déjà installés,
 ou ceux par défaut la première fois).
 
-  élément...        installe ces éléments en plus de ceux déjà choisis
-  --disable élém... désactive ces éléments
+  élément...        installe seulement ces éléments, en plus de ceux déjà
+                    choisis : les autres ne sont pas réinstallés
+  --disable élém... désactive ces éléments (seulement eux)
   --all             installe tout
   --yes, -y         sans menu ni question (garde les choix enregistrés)
   --files-only      copie les fichiers seulement : pas de paquets, pas de sudo,
@@ -112,6 +120,32 @@ is_item() { item_ids | grep -qxF -- "$1"; }
 
 selected() { printf '%s\n' "${SELECTED[@]}" | grep -qxF -- "$1"; }
 explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -qxF -- "$1"; }
+
+# module_handles MODULE ITEM: whether the module acts on that item, read from
+# its code: `selected ITEM`/`explicit ITEM`, a "ITEM|..." entry (Hyprland
+# features) or a name:ITEM pair (Ghostty's included files).
+module_handles() {
+  local file="$DOTFILES_DIR/modules/$1/module.sh" item=$2
+  grep -v '^[[:space:]]*#' "$file" | grep -qE \
+    "(selected|explicit) \"?$item\"?([^a-z0-9-]|\$)|\"$item\||:$item( |;|\$)"
+}
+
+# The modules to run: all of them, or only those handling the targets
+modules_to_run() {
+  local module item
+  for module in "${MODULES[@]}"; do
+    if ((!${#TARGETS[@]})) || printf '%s\n' "${ALWAYS_MODULES[@]}" | grep -qxF -- "$module"; then
+      echo "$module"
+      continue
+    fi
+    for item in "${TARGETS[@]}"; do
+      if module_handles "$module" "$item"; then
+        echo "$module"
+        break
+      fi
+    done
+  done
+}
 
 saved_selection() {
   local item id default
@@ -201,9 +235,11 @@ fi
 
 if [[ $mode == disable ]]; then
   ((${#args[@]})) || { echo "--disable attend au moins un élément" >&2; exit 1; }
+  TARGETS=("${args[@]}")
   mapfile -t SELECTED < <(saved_selection | grep -vxF -f <(printf '%s\n' "${args[@]}") || true)
 elif ((${#args[@]})); then
   EXPLICIT=("${args[@]}")
+  TARGETS=("${args[@]}")
   mapfile -t SELECTED < <({ saved_selection; printf '%s\n' "${args[@]}"; } | awk '!seen[$0]++')
 elif ((all)); then
   mapfile -t SELECTED < <(item_ids)
@@ -217,7 +253,12 @@ fi
 for module in "${MODULES[@]}"; do
   source "$DOTFILES_DIR/modules/$module/module.sh"
 done
-for module in "${MODULES[@]}"; do
+mapfile -t RUN_MODULES < <(modules_to_run)
+if ((${#TARGETS[@]})); then
+  info "Seulement : ${TARGETS[*]}"
+  echo "  Modules lancés : ${RUN_MODULES[*]} (les autres éléments ne sont pas touchés)"
+fi
+for module in "${RUN_MODULES[@]}"; do
   "module_${module//-/_}"
 done
 
@@ -251,7 +292,9 @@ if ((${#TODOS[@]})); then
   printf '  • %s\n' "${TODOS[@]}"
 fi
 
-# How to change what was just installed; the details are in dotfiles-guide
+# How to change what was just installed; the details are in dotfiles-guide.
+# Only after a full run: a targeted one shouldn't bury its result under them.
+((${#TARGETS[@]})) && exit 0
 TIPS=()
 selected neovim-themes && TIPS+=("Thème de Neovim : <leader>uC ou :Theme (aperçu, Entrée pour garder) · :Theme omarchy pour suivre Omarchy")
 selected git-ssh && TIPS+=("Cloner avec un compte : git clone git@github-<alias>:<owner>/<repo>.git (le repo garde ce compte) · ./install.sh git-ssh pour en ajouter un")

@@ -3,12 +3,19 @@
 -- libinput only ignores touches that start while typing, and only for 0.2 to
 -- 0.5 s after the last key; this touchpad reports neither pressure nor
 -- contact size, so a palm can't be recognized by its shape. Here every plain
--- key press turns the touchpad off until GUARD_MS after the last one.
+-- key press stops the cursor from moving until GUARD_MS after the last one.
 --
--- Shortcuts keep working with the touchpad: modifier keys never turn it off,
--- nor do keys typed with a modifier held (Ctrl+C...), and pressing a modifier
--- turns it back on at once, so Ctrl/Shift + click works right after typing.
-local GUARD_MS = 800 -- how long after the last key the touchpad stays off
+-- The touchpad is never turned off: its acceleration is set to zero while
+-- typing (a custom profile whose speed is 0), then put back. Turning it off
+-- closed the device, and a finger resting on it at that moment came back
+-- untracked: clicks still worked but the cursor no longer moved, or the
+-- touchpad stayed unusable until reset. Clicks always go through, so
+-- Ctrl/Shift + click works even mid-typing.
+--
+-- Modifier keys never start the guard, nor do keys typed with a modifier held
+-- (Ctrl+C...), and pressing a modifier ends it at once.
+local GUARD_MS = 800 -- how long after the last key the cursor stays still
+local FROZEN = "custom 1 0.0 0.0" -- zero speed whatever the finger does
 
 -- xkb keycodes (evdev + 8), the same whatever the layout
 local MODIFIERS = {
@@ -24,44 +31,40 @@ return function(settings)
   if not touchpad or touchpad == "" then return end
 
   local held = {} -- modifiers currently down
-  local blocked = false
+  local frozen = false
   local generation = 0 -- invalidates stale timers
 
-  -- A touchpad turned off on purpose (omarchy toggle touchpad) stays off
-  local function turned_off_on_purpose()
-    local f = io.open((os.getenv("HOME") or "") .. "/.local/state/omarchy/toggles/hypr/touchpad-disabled-name", "r")
-    if not f then return false end
-    local name = f:read("*l")
-    f:close()
-    return name == touchpad
+  -- The acceleration the touchpad has the rest of the time (the global
+  -- input setting: nothing sets one for this device alone)
+  local function normal_profile()
+    local profile = hl.get_config("input.accel_profile")
+    if type(profile) ~= "string" or profile == "[[EMPTY]]" then return "" end
+    return profile
   end
 
-  local function release()
-    if not blocked then return end
-    blocked = false
+  local function thaw()
+    if not frozen then return end
+    frozen = false
     generation = generation + 1
-    if not turned_off_on_purpose() then
-      hl.device({ name = touchpad, enabled = true })
-    end
+    hl.device({ name = touchpad, accel_profile = normal_profile() })
   end
 
   hl.on("input.keyboard.key", function(code, _, pressed)
     if MODIFIERS[code] then
       held[code] = pressed == 1 or nil
-      if pressed == 1 then release() end
+      if pressed == 1 then thaw() end
       return
     end
     if pressed ~= 1 or next(held) then return end
 
-    if not blocked then
-      if turned_off_on_purpose() then return end
-      blocked = true
-      hl.device({ name = touchpad, enabled = false })
+    if not frozen then
+      frozen = true
+      hl.device({ name = touchpad, accel_profile = FROZEN })
     end
     generation = generation + 1
     local mine = generation
     hl.timer(function()
-      if mine == generation then release() end
+      if mine == generation then thaw() end
     end, { timeout = GUARD_MS, type = "oneshot" })
   end)
 end

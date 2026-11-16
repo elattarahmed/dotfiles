@@ -70,6 +70,8 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `git-ssh` | ✓ | plusieurs comptes GitHub sur la même machine (voir plus bas) |
 | `ssh-server` | | serveur SSH pour te connecter depuis un autre ordinateur ; le pare-feu n'ouvre le port 22 qu'au réseau local |
 | `display-scale` | | échelle de l'écran (le script demande la valeur). Le bouton `scale-button` permet ensuite de la changer depuis la barre |
+| `adaptive-refresh` | | **Framework Laptop 13 AMD** : Hz adaptatifs (VRR) sur l'écran intégré. Il tourne à 120 Hz quand quelque chose bouge et descend vers 34–48 Hz sinon, ce qui économise la batterie. Super+Ctrl+Alt+H ouvre `hz`, qui affiche les Hz réels sans les faire monter (il lit le compteur de rafraîchissements du noyau au lieu de dessiner). Le curseur passe en logiciel (sinon il rame avec le VRR) et le paramètre noyau `amdgpu.dcdebugmask=0x610` coupe le Panel Self Refresh / Panel Replay, sans quoi l'écran tombe sous 1 FPS et peut figer. Demande le mot de passe sudo et un redémarrage (voir `dotfiles-guide framework`) |
+| `touchpad-reset` | | pavé tactile qui croit qu'un doigt est resté posé (bouger fait défiler, défiler zoome…) : Super+Ctrl+Alt+P le réinitialise, et il l'est aussi après chaque sortie de veille. Le pilote i2c-hid du pavé est détaché puis rattaché par un script root fixe (`/usr/local/lib/dotfiles/touchpad-rebind`), qu'une règle sudoers te laisse lancer sans mot de passe ; sans elle, le raccourci éteint et rallume le pavé dans Hyprland. Demande le mot de passe sudo |
 
 `./install.sh --list` affiche la même liste.
 
@@ -103,6 +105,8 @@ Dans un terminal, ces touches Alt arrivent telles quelles à zsh, qui a ses prop
 | Clic à 3 doigts, puis glisser à 3 doigts ↑ / ↓ | zoomer / dézoomer, lever les doigts termine (`zoom`) |
 | Clic à 3 doigts maintenu, puis glisser ↑ / ↓ | pareil, relâcher termine |
 | Double clic à 3 doigts | vue normale ↔ dernier zoom |
+| Super+Ctrl+Alt+P | réinitialiser le pavé tactile quand il croit qu'un doigt est resté posé (`touchpad-reset`) |
+| Super+Ctrl+Alt+H | afficher / masquer les Hz réels de l'écran (`adaptive-refresh`) |
 
 **Presse-papiers (`clipboard`)**
 
@@ -242,6 +246,8 @@ rm ~/.config/hypr/zoom.lua
 ```
 
 L'échelle de l'écran reste dans `hypr/monitors.lua`, qu'il n'y a pas besoin de toucher.
+
+Si les Hz adaptatifs ont été réglés à la main (lignes `vrr` et `no_hardware_cursors` dans `hypr/monitors.lua`, raccourci `hz --toggle`, règle `org.omarchy.hz`), retire ces lignes aussi. Le paramètre noyau déjà mis dans `/etc/limine-entry-tool.d/amdgpu-vrr.conf` est repris tel quel.
 
 ## Modifier sa config directement dans le dépôt (`--link`)
 

@@ -11,6 +11,8 @@ HYPR_FEATURES=(
   "gestures|gestures|3-finger swipe left/right: switch workspace"
   "natural-scroll|natural_scroll|Touchpad: natural (macOS) scrolling, slower"
   "touchscreen-off|touchscreen_off|Touchscreen turned off"
+  "adaptive-refresh|adaptive_refresh|VRR on the built-in screen, SUPER + CTRL + ALT + H: live refresh rate"
+  "touchpad-reset|touchpad_reset|SUPER + CTRL + ALT + P: reset a touchpad stuck with ghost fingers"
   "caps-lock|caps_lock|Real Caps Lock, Compose on Right Ctrl"
   "ligatures|ligatures|AltGr+O types œ (AltGr+Shift+O: Œ) instead of ø"
   "zoom|zoom|3-finger click, then swipe up/down: zoom like macOS"
@@ -43,7 +45,7 @@ module_hyprland() {
   # The same customizations written straight into Omarchy's files would run twice
   local found
   # Commented-out lines don't count: Omarchy's own files carry examples
-  local file pattern='\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"|"Resize mode"'
+  local file pattern='\(macOS style\)|require\("hypr\.zoom"\)|middle_click_paste|org\.omarchy\.whichport|leaf = "workspaces", enabled = true|"SUPER \+ CTRL \+ LEFT", "Previous workspace"|natural_scroll = true|touchscreen_enabled|compose:rctrl|"CTRL \+ ALT \+ SPACE"|"Resize mode"|org\.omarchy\.hz|"hz --toggle"|"Reset touchpad"'
   found=$(for file in "$hypr"/{bindings,input,looknfeel,hyprland}.lua; do
     [[ -f $file ]] && grep -v '^\s*--' "$file" | grep -qE "$pattern" && echo "$file"
   done || true)

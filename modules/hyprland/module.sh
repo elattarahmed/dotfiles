@@ -13,6 +13,7 @@ HYPR_FEATURES=(
   "touchscreen-off|touchscreen_off|Touchscreen turned off"
   "adaptive-refresh|adaptive_refresh|VRR on the built-in screen, SUPER + CTRL + ALT + H: live refresh rate"
   "touchpad-reset|touchpad_reset|SUPER + CTRL + ALT + P: reset a touchpad stuck with ghost fingers"
+  "typing-guard|typing_guard|Touchpad off while typing, until 0.8 s after the last key; modifiers turn it back on"
   "caps-lock|caps_lock|Real Caps Lock, Compose on Right Ctrl"
   "ligatures|ligatures|AltGr+O types œ (AltGr+Shift+O: Œ) instead of ø"
   "zoom|zoom|3-finger click, then swipe up/down: zoom like macOS"
@@ -88,7 +89,7 @@ local features = {
 ${lines}}
 
 local settings = {
-  touchpad = "${touchpad}", -- for zoom, from \`hyprctl devices\`
+  touchpad = "${touchpad}", -- for zoom and typing_guard, from \`hyprctl devices\`
   touchscreen = "${touchscreen}", -- for touchscreen_off, from \`hyprctl devices\`
 }
 

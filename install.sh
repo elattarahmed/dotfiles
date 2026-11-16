@@ -59,6 +59,7 @@ ITEMS=(
   "display-scale|off|Échelle de l'écran (demande la valeur)"
   "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
   "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
+  "typing-guard|off|Pavé tactile · coupé pendant la frappe jusqu'à 0,8 s après la dernière touche (paumes ignorées) · Ctrl/Maj/Alt/Super le rallument tout de suite pour Ctrl+clic et Maj+clic"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.

@@ -31,7 +31,7 @@ ITEMS=(
   "gestures|on|Glisser à 3 doigts ←/→ · changer de workspace"
   "zoom|on|Zoom façon macOS · clic à 3 doigts puis glisser ↑/↓ · remis à zéro pendant le verrouillage"
   "workspace-animation|on|Animation de glissement entre les workspaces"
-  "no-middle-paste|on|Le clic du milieu (tap à 3 doigts) ne colle plus la sélection"
+  "no-middle-paste|on|Pavé tactile · le clic/tap à 3 doigts ne colle jamais (même avec Maj/Ctrl/Alt) · il ne sert qu'au zoom"
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
@@ -69,6 +69,7 @@ SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 KNOWN_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/known-items"
 MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/mode"
 TODOS=()
+RELOGIN=()
 SELECTED=()
 EXPLICIT=()
 
@@ -235,6 +236,11 @@ fi
 info "Terminé"
 if [[ -d $BACKUP_DIR ]]; then
   echo "  Anciennes versions des fichiers remplacés : $(pretty "$BACKUP_DIR")"
+fi
+if ((${#RELOGIN[@]})); then
+  echo
+  printf '\033[1;33m┃ DÉCONNECTE-TOI PUIS RECONNECTE-TOI\033[0m (Super+Échap → Logout) pour que :\n'
+  printf '\033[1;33m┃\033[0m   • %s\n' "${RELOGIN[@]}" | awk '!seen[$0]++'
 fi
 if ((${#TODOS[@]})); then
   echo

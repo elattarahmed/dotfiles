@@ -9,6 +9,10 @@
 -- the edge instead of going past it (cursor.zoom_rigid).
 -- SUPER + CTRL + Z / SUPER + CTRL + ALT + Z (Omarchy defaults) still work.
 --
+-- A 3-finger click or tap only ever zooms: it is taken whatever keys are held
+-- (Shift, Ctrl, Alt, Super…), so it never reaches the app as a middle click
+-- (Ghostty, for one, pastes on middle click and can't be told not to).
+--
 -- The touchpad comes from settings.touchpad in ~/.config/hypr/dotfiles.lua
 -- (install.sh fills it from `hyprctl devices`); without one only the keyboard
 -- zoom out is set up, so middle clicks from a mouse are never taken over.
@@ -113,7 +117,9 @@ return function(settings)
   local TOUCHPAD = settings.touchpad
   if not TOUCHPAD or TOUCHPAD == "" then return end
 
-  local touchpad_only = { device = { inclusive = true, list = { TOUCHPAD } } }
+  local touchpad_only = { device = { inclusive = true, list = { TOUCHPAD } }, ignore_mods = true }
+  -- no_middle_paste.lua swallows the touchpad's middle click when zoom doesn't
+  settings.touchpad_middle_taken = true
 
   o.bind("mouse:274", "Zoom: adjust mode (3-finger click)", function()
     if state.click_pending then
@@ -143,7 +149,7 @@ return function(settings)
     -- Releasing after a drag ends the adjustment; a plain click keeps the mode
     -- open for a 3-finger swipe.
     if state.adjusted then leave_mode() end
-  end, { release = true, device = touchpad_only.device })
+  end, { release = true, ignore_mods = true, device = touchpad_only.device })
 
   hl.gesture({
     fingers = 3,
@@ -163,8 +169,4 @@ return function(settings)
       end,
     },
   })
-
-  -- Alt + 3-finger click: swallow it, otherwise it reaches Ghostty as a middle
-  -- click and pastes (Ghostty's middle-click paste can't be turned off).
-  o.bind("ALT + mouse:274", "Ignore Alt + 3-finger click (no paste)", function() end, touchpad_only)
 end

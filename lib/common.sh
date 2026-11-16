@@ -16,6 +16,9 @@ info() { printf '\n\033[1;34m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
 ok() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$*" >&2; }
 todo() { TODOS+=("$*"); }
+# relogin "reason": something only applies to a new session; install.sh ends
+# with one box listing every reason, so it can't get lost among the todos.
+relogin() { RELOGIN+=("$*"); }
 
 is_live() { ((!FILES_ONLY)); }
 # sudo can only ask for a password (or a fingerprint) in a terminal

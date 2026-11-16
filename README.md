@@ -44,7 +44,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `gestures` | ✓ | glisser à 3 doigts ←/→ pour changer de workspace |
 | `zoom` | ✓ | zoom de l'écran façon macOS au pavé tactile. Pendant le verrouillage et l'économiseur d'écran, le zoom revient à la normale, puis se remet au retour (service `zoom-lock-guard`) |
 | `workspace-animation` | ✓ | les workspaces glissent au lieu d'apparaître d'un coup |
-| `no-middle-paste` | ✓ | le tap à 3 doigts (clic du milieu) ne colle plus la dernière sélection |
+| `no-middle-paste` | ✓ | le clic ou le tap à 3 doigts du pavé tactile (clic du milieu) ne colle jamais, même avec Maj, Ctrl, Alt ou Super tenu, et même dans Ghostty : il n'arrive plus du tout aux applications. Avec `zoom`, il ne sert qu'au zoom. Le bouton du milieu d'une vraie souris garde son rôle (ouvrir un lien dans un onglet) |
 | `screensaver` | ✓ | l'économiseur affiche ton texte au lieu du logo Omarchy, dessiné dans huit polices ASCII qui tournent, une par effet. Le script demande le texte ; `screensaver-text` le change ensuite (voir plus bas) |
 | `plymouth` | ✓ | écran de démarrage (celui du mot de passe du disque) aux couleurs Matte Black. Demande le mot de passe sudo |
 | `sudo-notify` | ✓ | notification quand sudo attend ton mot de passe ou ton empreinte dans un terminal (elle dit si le lecteur d'empreinte est utilisable) ; un clic amène au terminal. Seulement quand sudo demande vraiment, pas en SSH. Une ligne `pam_exec` facultative en haut de `/etc/pam.d/sudo` lance un script copié dans `/usr/local/lib/dotfiles` (appartient à root : jamais un lien vers le dépôt). Demande le mot de passe sudo |

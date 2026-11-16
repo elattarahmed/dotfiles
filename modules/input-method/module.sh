@@ -26,9 +26,19 @@ input_method_ligatures() {
     for file in rules/evdev symbols/dotfiles; do
       install_file "$src/$file" "$xkb/$file"
     done
-    # hypr/dotfiles.lua was written before these files existed: rebuild the keymap
+    # xkbcommon only searches ~/.config/xkb if it existed when Hyprland
+    # started: a reload doesn't pick up a folder created since, and the
+    # unknown option is dropped without a word. Ask the compositor what
+    # keymap it really hands out.
     if is_live && [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-      hyprctl reload >/dev/null && ok "disposition clavier rechargée"
+      hyprctl reload >/dev/null
+      sleep 1
+      if command -v xkbcli >/dev/null &&
+        timeout 5 xkbcli dump-keymap-wayland 2>/dev/null | grep -m1 'key <AD09>' | grep -qw oe; then
+        ok "AltGr+O → œ actif"
+      else
+        relogin "AltGr+O tape œ (Hyprland ne lit $(pretty "$xkb") qu'à son démarrage)"
+      fi
     fi
   else
     for file in rules/evdev symbols/dotfiles; do
@@ -76,7 +86,11 @@ input_method_fcitx() {
       # Apps launched from now on; a new session applies it everywhere
       systemctl --user set-environment GTK_IM_MODULE=simple QT_IM_MODULE=compose \
         INPUT_METHOD= XMODIFIERS= SDL_IM_MODULE=
-      todo "se déconnecter puis se reconnecter pour que toutes les applis gèrent ^ et ¨ sans fcitx5"
+      # Apps started before this (Ghostty keeps one process for all its
+      # windows) still wait for fcitx5: ^ and ¨ type nothing there
+      if [[ -n ${XMODIFIERS:-} || ${GTK_IM_MODULE:-} != simple ]]; then
+        relogin "^ et ¨ remarchent dans Ghostty et les autres applis ouvertes (elles attendent encore fcitx5, arrêté)"
+      fi
     fi
   elif [[ -f $env_file ]] && cmp -s "$src" "$env_file"; then
     info "Méthode de saisie : fcitx5 rétabli"
@@ -87,7 +101,7 @@ input_method_fcitx() {
       if systemctl --user enable --now "$service" >/dev/null 2>&1; then
         ok "fcitx5 réactivé"
       fi
-      todo "se déconnecter puis se reconnecter pour revenir à fcitx5 partout"
+      relogin "fcitx5 revient dans toutes les applis"
     fi
   fi
 }

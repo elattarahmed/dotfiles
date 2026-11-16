@@ -15,7 +15,7 @@ HYPR_FEATURES=(
   "ligatures|ligatures|AltGr+O types œ (AltGr+Shift+O: Œ) instead of ø"
   "zoom|zoom|3-finger click, then swipe up/down: zoom like macOS"
   "workspace-animation|workspace_animation|Slide between workspaces"
-  "no-middle-paste|no_middle_paste|Middle click (3-finger tap) doesn't paste"
+  "no-middle-paste|no_middle_paste|3-finger click/tap never pastes, whatever keys are held"
   "whichport|whichport_window|whichport opens as a floating window"
 )
 

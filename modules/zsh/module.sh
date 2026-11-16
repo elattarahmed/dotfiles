@@ -32,13 +32,13 @@ EOF
 
   if [[ $(getent passwd "$USER" | cut -d: -f7) != */zsh ]]; then
     if chsh -s /usr/bin/zsh; then
-      todo "Déconnecte-toi puis reconnecte-toi : zsh sera ton shell dans les nouveaux terminaux."
+      relogin "zsh devient le shell de toute la session (Ghostty l'ouvre déjà)"
     else
       warn "chsh a échoué, lance : chsh -s /usr/bin/zsh"
     fi
   elif [[ ${SHELL:-} != */zsh ]]; then
     # chsh done, but this session started before it: $SHELL still says bash
-    todo "zsh est ton shell, mais la session a démarré avant : Ghostty ouvre déjà zsh, déconnecte-toi puis reconnecte-toi pour le reste."
+    relogin "zsh devient le shell de toute la session (Ghostty l'ouvre déjà)"
   fi
 
   if selected zsh-root && ! can_sudo; then

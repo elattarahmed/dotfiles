@@ -32,7 +32,22 @@ soft_reset() {
   done <<<"$names"
 }
 
+# The rebound touchpad is a new device: Hyprland doesn't tie the binds and
+# settings that name it (zoom's 3-finger click, no_middle_paste) to it until
+# the config is reloaded.
+reload_hyprland() {
+  local i
+  # Let Hyprland drop the old device and pick up the new one first
+  sleep 0.5
+  for ((i = 0; i < 30; i++)); do
+    [[ -n $(touchpads) ]] && break
+    sleep 0.1
+  done
+  hyprctl reload >/dev/null
+}
+
 if [[ ${1:-} != --soft && -x $REBIND ]] && sudo -n "$REBIND" >/dev/null 2>&1; then
+  reload_hyprland
   notify "Pavé tactile réinitialisé"
 elif soft_reset; then
   notify "Pavé tactile réinitialisé" "réinitialisation légère"

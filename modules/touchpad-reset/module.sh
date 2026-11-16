@@ -18,7 +18,20 @@ touchpad_sleep_hook() {
 #!/bin/sh
 # From the dotfiles (touchpad-reset): after resume, reset the touchpad so it
 # doesn't come back believing fingers are still on it.
-[ "\$1" = post ] && exec $TOUCHPAD_REBIND
+[ "\$1" = post ] || exit 0
+$TOUCHPAD_REBIND || exit 0
+
+# The touchpad comes back as a new device: reload each running Hyprland, as
+# its user, so the binds and settings that name it (zoom) apply to it again.
+sleep 1
+for sock in /run/user/*/hypr/*/.socket.sock; do
+  [ -S "\$sock" ] || continue
+  dir=\${sock%/.socket.sock}
+  runtime=\${dir%/hypr/*}
+  user=\$(stat -c %U "\$runtime") || continue
+  runuser -u "\$user" -- env XDG_RUNTIME_DIR="\$runtime" \\
+    HYPRLAND_INSTANCE_SIGNATURE="\${dir##*/}" hyprctl reload >/dev/null 2>&1 || true
+done
 exit 0
 EOF
 }

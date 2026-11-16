@@ -1,0 +1,28 @@
+#!/bin/bash
+# Runs as root (sudo, or the system-sleep hook after resume). Unbinds and
+# binds again the i2c-hid driver of every I2C touchpad: the touchpad is reset
+# and shows up as a new device, so libinput forgets the fingers it believes
+# are still down. Takes no argument on purpose: sudoers lets the user run it
+# without a password.
+set -u
+
+status=1
+for driver in /sys/bus/i2c/drivers/i2c_hid_acpi /sys/bus/i2c/drivers/i2c_hid_of; do
+  [[ -d $driver ]] || continue
+  for dev in "$driver"/i2c-*; do
+    [[ -e $dev ]] || continue
+    # Only touchpads: the touchscreen and the other I2C devices stay as they are
+    grep -qs "Touchpad" "$dev"/*/input/input*/name || continue
+    name=$(basename "$dev")
+    echo "$name" >"$driver/unbind" || continue
+    sleep 0.3
+    if echo "$name" >"$driver/bind"; then
+      echo "touchpad reset: $name"
+      status=0
+    else
+      echo "touchpad $name: bind failed (retry, or reboot)" >&2
+    fi
+  done
+done
+((status == 0)) || echo "no I2C touchpad found" >&2
+exit $status

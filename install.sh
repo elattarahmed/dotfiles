@@ -57,10 +57,12 @@ ITEMS=(
   "git-ssh|on|Plusieurs comptes GitHub · une clé SSH et un alias github-<compte> chacun"
   "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
   "display-scale|off|Échelle de l'écran (demande la valeur)"
+  "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
+  "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland adaptive-refresh touchpad-reset zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
 SELECTION_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/selection"
 # Every item that existed when the selection was saved: an item added to the

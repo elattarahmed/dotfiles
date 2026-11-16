@@ -1,0 +1,42 @@
+#!/bin/bash
+# Fix a touchpad that believes one or more fingers are still on it (moving
+# scrolls, scrolling zooms...). Bound to SUPER + CTRL + ALT + P.
+#
+#   touchpad-reset          full reset: the touchpad's driver is unbound and
+#                           bound again (no password, through sudoers), or
+#                           the light reset when that isn't installed
+#   touchpad-reset --soft   light reset: Hyprland turns the touchpad off and
+#                           on, so libinput drops every finger it tracks
+set -u
+
+REBIND=/usr/local/lib/dotfiles/touchpad-rebind
+
+notify() { command -v notify-send >/dev/null && notify-send -a Touchpad -t 2500 "$@"; }
+
+touchpads() {
+  hyprctl devices -j 2>/dev/null | jq -r '.mice[].name | select(test("touchpad"; "i"))'
+}
+
+soft_reset() {
+  local name names
+  names=$(touchpads)
+  [[ -n $names ]] || return 1
+  # A touchpad turned off on purpose (omarchy toggle touchpad) stays off
+  local disabled
+  disabled=$(cat "$HOME/.local/state/omarchy/toggles/hypr/touchpad-disabled-name" 2>/dev/null || true)
+  while read -r name; do
+    [[ $name == "$disabled" ]] && continue
+    hyprctl eval "hl.device({ name = \"$name\", enabled = false })" >/dev/null
+    sleep 0.3
+    hyprctl eval "hl.device({ name = \"$name\", enabled = true })" >/dev/null
+  done <<<"$names"
+}
+
+if [[ ${1:-} != --soft && -x $REBIND ]] && sudo -n "$REBIND" >/dev/null 2>&1; then
+  notify "Pavé tactile réinitialisé"
+elif soft_reset; then
+  notify "Pavé tactile réinitialisé" "réinitialisation légère"
+else
+  notify -u critical "Pavé tactile" "aucun pavé tactile trouvé"
+  exit 1
+fi

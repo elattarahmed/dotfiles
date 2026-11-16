@@ -208,7 +208,57 @@ Le fichier est relu dès que tu l'enregistres.
 
 ---
 
-## 7. Le reste
+## 7. Framework Laptop 13 : Hz adaptatifs et pavé tactile
+
+Deux éléments décochés par défaut, faits pour le Framework Laptop 13 AMD (Ryzen AI 300, écran 2,8K à 120 Hz).
+
+### Hz adaptatifs (`adaptive-refresh`)
+
+L'écran tourne à 120 Hz quand quelque chose bouge (souris, défilement) et descend vers 34–48 Hz quand l'image est figée : la fluidité reste, la batterie dure plus. Une vidéo fait tourner l'écran à sa propre cadence (60 Hz pour une vidéo à 30 ou 60 images/s).
+
+```bash
+./install.sh adaptive-refresh    # demande le mot de passe sudo
+```
+
+Puis **redémarre** : le paramètre noyau `amdgpu.dcdebugmask=0x610` ne s'applique qu'au démarrage. Il coupe le Panel Self Refresh et le Panel Replay de l'écran. Sans lui, le VRR fait tomber la souris et les vidéos sous 1 FPS, jusqu'à figer l'écran. Après le redémarrage, `cat /sys/module/amdgpu/parameters/dcdebugmask` doit afficher `1552`.
+
+| Pour | Comment |
+|---|---|
+| Voir les Hz réels | `Super+Ctrl+Alt+H` (la même touche le ferme), ou `hz` dans un terminal, `hz --once` pour une mesure. `hz` lit le compteur de rafraîchissements du noyau : il ne dessine rien, donc ne fait pas monter les Hz comme une page de test dans le navigateur |
+| VRR en plein écran seulement | dans `~/.config/hypr/dotfiles/adaptive_refresh.lua`, `vrr = 2` au lieu de `1`, puis `hyprctl reload` |
+| Tout retirer | `./install.sh --disable adaptive-refresh`, puis redémarrer |
+| L'écran fige quand même | `Ctrl+Alt+F3`, connecte-toi, `cd` dans le dépôt puis `./install.sh --disable adaptive-refresh --files-only`, et reviens avec `Ctrl+Alt+F1` (ou `F2`) : le VRR est coupé. Le paramètre noyau reste, sans gêner ; `./install.sh --disable adaptive-refresh` (sans `--files-only`) le retire au prochain démarrage |
+
+Le curseur de la souris passe en logiciel : avec le VRR, le pilote AMD ne met à jour le curseur matériel qu'une image sur plusieurs, et la souris ramerait. N'utilise pas l'overlay de débogage de Hyprland (`debug:overlay`) pour voir les FPS : avec le VRR, il fige l'écran.
+
+### Pavé tactile avec des doigts fantômes (`touchpad-reset`)
+
+Parfois, après une longue pause (souvent une mise en veille), le pavé croit qu'un ou deux doigts sont restés posés : bouger fait défiler, défiler zoome, etc.
+
+```bash
+./install.sh touchpad-reset    # demande le mot de passe sudo
+```
+
+| Pour | Comment |
+|---|---|
+| Le débloquer tout de suite | `Super+Ctrl+Alt+P` (ou `touchpad-reset` dans un terminal). Une notification confirme |
+| L'éviter | rien à faire : le pavé est aussi réinitialisé à chaque sortie de veille |
+| Réinitialisation légère seulement | `touchpad-reset --soft` : Hyprland éteint et rallume le pavé, sans toucher au pilote |
+
+La réinitialisation complète détache puis rattache le pilote `i2c_hid_acpi` du pavé. Le pavé redémarre et revient comme un nouveau périphérique, et libinput oublie les doigts qu'il croyait posés. Elle passe par un script root fixe (`/usr/local/lib/dotfiles/touchpad-rebind`, sans argument), qu'une règle sudoers te laisse lancer sans mot de passe.
+
+**Les causes possibles :**
+
+- Le **micrologiciel du pavé** (PixArt `PIXA3854`) qui perd un contact : il ne signale pas qu'un doigt s'est levé, ou il envoie une position aberrante. libinput le note dans le journal de Hyprland (`kernel bug: Touch jump detected and discarded`).
+- La **sortie de veille** : la puce du pavé et son bus I2C se remettent en route dans un état incohérent. C'est le cas le plus souvent signalé sur les Framework, d'où la réinitialisation automatique au réveil.
+- Une **paume ou un pouce** posé au bord pendant la frappe, que le pavé continue de compter.
+- Des **parasites électriques** : chargeur sans prise de terre, humidité, objet métallique contre le pavé. Si ça arrive surtout sur secteur, essaie une autre prise ou un autre chargeur.
+
+Pour voir ce que le pavé croit sentir : `sudo libinput debug-events --device /dev/input/event8` (le numéro d'`event` est dans `cat /proc/bus/input/devices`, sous « Touchpad »). Une ligne qui annonce plusieurs doigts alors qu'il n'y en a aucun confirme le doigt fantôme.
+
+---
+
+## 8. Le reste
 
 - Thème complet du bureau (terminal, barre, verrouillage, fond…) : `Super+Ctrl+T`, ou menu **Appearance → Theme**.
 - Tous les raccourcis clavier : `Super+K`.

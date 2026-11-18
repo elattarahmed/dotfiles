@@ -210,7 +210,9 @@ Le fichier est relu dès que tu l'enregistres.
 
 ## 7. Framework Laptop 13 : Hz adaptatifs et pavé tactile
 
-Deux éléments décochés par défaut, faits pour le Framework Laptop 13 AMD (Ryzen AI 300, écran 2,8K à 120 Hz).
+Des éléments faits pour le Framework Laptop 13 AMD (Ryzen AI 300, écran 2,8K à 120 Hz), décochés par défaut.
+
+**Pour la batterie**, les deux qui comptent le plus : `power-profile` (coché par défaut, profil `balanced` au lieu de `performance`) et `adaptive-refresh` (ci-dessous). `powerprofilesctl get` montre le profil actuel.
 
 ### Hz adaptatifs (`adaptive-refresh`)
 
@@ -256,7 +258,7 @@ La réinitialisation complète détache puis rattache le pilote `i2c_hid_acpi` d
 
 Pour voir ce que le pavé croit sentir : `sudo libinput debug-events --device /dev/input/event8` (le numéro d'`event` est dans `cat /proc/bus/input/devices`, sous « Touchpad »). Une ligne qui annonce plusieurs doigts alors qu'il n'y en a aucun confirme le doigt fantôme.
 
-### Pavé tactile coupé pendant la frappe (`typing-guard`)
+### Curseur immobile pendant la frappe (`typing-guard`)
 
 Quand tu tapes, une paume qui frôle le pavé ne déplace plus le curseur.
 
@@ -264,15 +266,15 @@ Quand tu tapes, une paume qui frôle le pavé ne déplace plus le curseur.
 ./install.sh typing-guard
 ```
 
-libinput a déjà un blocage pendant la frappe, mais il est court (0,2 à 0,5 s après la dernière touche, non réglable) et ne bloque que les contacts qui commencent pendant la frappe. Le pavé du Framework ne mesure ni la pression ni la taille des contacts : une paume ne peut pas être reconnue à sa forme, comme sur un trackpad Apple. Avec `typing-guard`, chaque touche tapée coupe le pavé, qui revient 0,8 s après la dernière.
+libinput a déjà un blocage pendant la frappe, mais il est court (0,2 à 0,5 s après la dernière touche, non réglable) et ne bloque que les contacts qui commencent pendant la frappe. Le pavé du Framework ne mesure ni la pression ni la taille des contacts : une paume ne peut pas être reconnue à sa forme, comme sur un trackpad Apple. Avec `typing-guard`, chaque touche tapée immobilise le curseur jusqu'à 0,8 s après la dernière. Le pavé n'est pas éteint : son accélération passe à zéro, puis revient. (Une première version l'éteignait, et un doigt posé à ce moment revenait mal suivi : clics qui marchent mais curseur bloqué.)
 
 | Pour | Comment |
 |---|---|
-| Ctrl + clic, Maj + clic juste après avoir tapé | appuie sur Ctrl ou Maj : le pavé revient tout de suite. Ctrl, Maj, Alt, AltGr et Super ne le coupent jamais, ni les raccourcis comme Ctrl+C |
-| Changer le délai | `GUARD_MS` en haut de `~/.config/hypr/dotfiles/typing_guard.lua` (en millisecondes), puis `hyprctl reload`. Plus long protège mieux des paumes, plus court rend le pavé plus vite après la frappe |
+| Ctrl + clic, Maj + clic juste après avoir tapé | ça marche : les clics passent toujours, et appuyer sur Ctrl ou Maj rend aussi le mouvement tout de suite. Ctrl, Maj, Alt, AltGr et Super ne déclenchent jamais le blocage, ni les raccourcis comme Ctrl+C |
+| Changer le délai | `GUARD_MS` en haut de `~/.config/hypr/dotfiles/typing_guard.lua` (en millisecondes), puis `hyprctl reload`. Plus long protège mieux des paumes, plus court rend le mouvement plus vite après la frappe |
 | Le désactiver | `./install.sh --disable typing-guard` |
 
-Limites : un clic simple, sans Ctrl ni Maj, est ignoré pendant ces 0,8 s. Une paume posée et immobile pendant une pause plus longue redevient un doigt. Un clavier externe coupe aussi le pavé.
+Limites : une paume posée pendant une pause de plus de 0,8 s redevient un doigt. Un tap de paume (pas un clic) reste filtré par libinput seulement. Un clavier externe déclenche aussi le blocage.
 
 ---
 

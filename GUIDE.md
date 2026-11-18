@@ -210,7 +210,9 @@ Le fichier est relu dès que tu l'enregistres.
 
 ## 7. Framework Laptop 13 : Hz adaptatifs et pavé tactile
 
-Deux éléments décochés par défaut, faits pour le Framework Laptop 13 AMD (Ryzen AI 300, écran 2,8K à 120 Hz).
+Des éléments faits pour le Framework Laptop 13 AMD (Ryzen AI 300, écran 2,8K à 120 Hz), décochés par défaut.
+
+**Pour la batterie**, les deux qui comptent le plus : `power-profile` (coché par défaut, profil `balanced` au lieu de `performance`) et `adaptive-refresh` (ci-dessous). `powerprofilesctl get` montre le profil actuel.
 
 ### Hz adaptatifs (`adaptive-refresh`)
 

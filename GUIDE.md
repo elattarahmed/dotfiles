@@ -205,7 +205,7 @@ Dans `~/.config/omarchy/shell.json`, la partie `"idle"`, en secondes. `lock` est
 }
 ```
 
-Le fichier est relu dès que tu l'enregistres. Pour que ce soit le réglage de chaque nouvelle machine, change `IDLE_SCREENSAVER` et `IDLE_BLANK` dans `modules/idle/module.sh` : `./install.sh` les remet sinon à 5 et 15 min.
+Les délais ne s'appliquent qu'au redémarrage du shell Omarchy : après avoir enregistré, lance `omarchy restart shell` (le détecteur d'inactivité garde sinon l'ancien délai et peut ne plus jamais se déclencher). Pour que ce soit le réglage de chaque nouvelle machine, change `IDLE_SCREENSAVER` et `IDLE_BLANK` dans `modules/idle/module.sh` : `./install.sh` les remet sinon à 5 et 15 min.
 
 ### Le désactiver
 

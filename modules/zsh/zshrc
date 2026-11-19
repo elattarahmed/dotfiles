@@ -163,9 +163,14 @@ command -v fzf &>/dev/null && source <(fzf --zsh)
 if (( DOTFILES_ZSH_PROGRESS )) && (( $+commands[advcp] )); then
   alias cp='advcp -g' mv='advmv -g'
 fi
+# rm with the same bars (advrm, from the dotfiles repo, in /usr/local/bin so
+# `sudo rm` finds it too). Options it doesn't handle go to the real rm.
+if (( DOTFILES_ZSH_PROGRESS )) && [[ -x /usr/local/bin/advrm ]]; then
+  alias rm='/usr/local/bin/advrm'
+fi
 
 # The trailing space makes zsh expand the next word's alias too, so
-# `sudo cp` / `sudo mv` keep the progress bars (and `sudo g` runs git).
+# `sudo cp` / `sudo mv` / `sudo rm` keep the progress bars (and `sudo g` runs git).
 alias sudo='sudo '
 
 # Prompt: Powerlevel10k, or Omarchy's starship when it is turned off or not

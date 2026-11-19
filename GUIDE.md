@@ -155,7 +155,16 @@ C'est l'écran du démarrage où tu tapes le mot de passe du disque chiffré. Il
 
 ## 6. Économiseur d'écran
 
-Il démarre après **150 secondes** d'inactivité. L'écran se verrouille à **300 secondes**.
+Avec l'élément `idle-lock` (coché par défaut) :
+
+| Inactivité | Ce qui se passe |
+|---|---|
+| **5 min** | l'économiseur démarre. Au moindre mouvement ou touche, il se ferme et **l'écran de verrouillage demande ton mot de passe** : tu ne retombes pas sur le bureau. |
+| **15 min** | la session se verrouille et **l'écran s'éteint**. Une touche le rallume sur l'écran de verrouillage. |
+
+L'économiseur ne peut pas s'afficher *par-dessus* l'écran de verrouillage d'Omarchy : le mot de passe est donc demandé juste après, quand tu reviens. C'est le service `screensaver-lock` qui s'en charge (`systemctl --user status screensaver-lock`). Un économiseur lancé à la main (menu **System → Screensaver**) ne verrouille pas en se fermant.
+
+Sans `idle-lock`, ce sont les délais d'Omarchy : économiseur à 2 min 30, verrouillage à 5 min, écran éteint 5 s après le verrouillage.
 
 ### Le voir maintenant
 
@@ -187,16 +196,16 @@ Les réglages sont dans `~/.config/dotfiles/screensaver.conf`, sur la machine se
 
 ### Changer quand il démarre
 
-Dans `~/.config/omarchy/shell.json`, la partie `"idle"`, en secondes :
+Dans `~/.config/omarchy/shell.json`, la partie `"idle"`, en secondes. `lock` est le moment où l'écran devient noir (verrouillage puis extinction 5 s plus tard) :
 
 ```json
 "idle": {
-  "screensaver": 150,
-  "lock": 300
+  "screensaver": 300,
+  "lock": 900
 }
 ```
 
-Le fichier est relu dès que tu l'enregistres.
+Le fichier est relu dès que tu l'enregistres. Pour que ce soit le réglage de chaque nouvelle machine, change `IDLE_SCREENSAVER` et `IDLE_BLANK` dans `modules/idle/module.sh` : `./install.sh` les remet sinon à 5 et 15 min.
 
 ### Le désactiver
 

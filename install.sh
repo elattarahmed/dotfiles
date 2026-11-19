@@ -17,7 +17,7 @@ ITEMS=(
   "zsh-p10k-style|off|zsh · le style de prompt Powerlevel10k du dépôt tel quel (demande une police avec icônes Nerd Font)"
   "zsh-line-keys|on|zsh · Ctrl/Alt + Effacer/Suppr et Alt + flèches (début/fin de ligne)"
   "zsh-selection|on|zsh · sélection avec Maj + flèches · Alt+A/C/X tout sélectionner/copier/couper"
-  "zsh-progress|on|zsh · cp et mv avec deux barres de progression (totale et fichier par fichier)"
+  "zsh-progress|on|zsh · cp, mv et rm avec deux barres de progression (totale et élément par élément)"
   "zsh-root|off|zsh et la même config pour root (sudo)"
   "ghostty|on|Ghostty comme terminal par défaut"
   "ghostty-font|on|Ghostty · texte en taille 11 au lieu de 9"
@@ -35,6 +35,7 @@ ITEMS=(
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
+  "idle-lock|on|Veille · économiseur à 5 min · mot de passe dès qu'on revient · verrouillé et écran noir à 15 min"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
@@ -60,11 +61,11 @@ ITEMS=(
   "power-profile|on|Batterie · profil d'énergie équilibré (balanced) au lieu de performance"
   "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
   "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
-  "typing-guard|off|Pavé tactile · le curseur ne bouge plus pendant la frappe jusqu'à 0,8 s après la dernière touche (paumes ignorées) · les clics passent toujours (Ctrl+clic · Maj+clic)"
+  "typing-guard|off|Pavé tactile · pendant la frappe et 0,8 s après · le curseur ne bouge plus et un effleurement (tap) ne clique plus · le clic appuyé passe toujours (Ctrl+clic · Maj+clic)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

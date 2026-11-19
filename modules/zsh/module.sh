@@ -1,6 +1,23 @@
 # zsh as the login shell, with a Powerlevel10k or starship prompt.
 # Items: zsh, zsh-p10k, zsh-p10k-style, zsh-line-keys, zsh-selection, zsh-progress, zsh-root
 
+# rm with progress bars (advrm). Root-owned in /usr/local/bin, never a link
+# to the repo: `sudo rm` runs it as root.
+zsh_advrm() {
+  local src="$DOTFILES_DIR/modules/zsh/advrm" dest=/usr/local/bin/advrm
+  is_live || return 0
+  if selected zsh-progress; then
+    cmp -s "$src" "$dest" 2>/dev/null && return 0
+    if ! can_sudo; then
+      todo "rm avec barres de progression : relance ./install.sh dans un terminal (il demande le mot de passe sudo)."
+      return 0
+    fi
+    sudo install -m 755 -o root -g root "$src" "$dest" && ok "$dest (rm avec barres de progression)"
+  elif [[ -f $dest ]] && grep -q 'same two progress bars as advcp' "$dest" && can_sudo; then
+    sudo rm -f "$dest" && ok "$dest supprimé"
+  fi
+}
+
 module_zsh() {
   selected zsh || return 0
   local dir="$DOTFILES_DIR/modules/zsh"
@@ -9,6 +26,7 @@ module_zsh() {
   pkg_add zsh zsh-autosuggestions zsh-syntax-highlighting zsh-completions
   selected zsh-p10k && aur_add zsh-theme-powerlevel10k-git
   selected zsh-progress && aur_add advcpmv
+  zsh_advrm
 
   install_file "$dir/zshrc" "$HOME/.zshrc"
   # The repo's prompt style needs a Nerd Font, so it is opt-in. Otherwise an
@@ -25,7 +43,7 @@ module_zsh() {
 DOTFILES_ZSH_LINE_KEYS=$(selected zsh-line-keys && echo 1 || echo 0)  # zsh-line-keys: Ctrl/Alt + Backspace/Delete, Alt + arrows
 DOTFILES_ZSH_SELECTION=$(selected zsh-selection && echo 1 || echo 0)  # zsh-selection: Shift + arrows select, Alt+A/C/X
 DOTFILES_ZSH_P10K=$(selected zsh-p10k && echo 1 || echo 0)  # zsh-p10k: Powerlevel10k prompt (0: Omarchy's starship)
-DOTFILES_ZSH_PROGRESS=$(selected zsh-progress && echo 1 || echo 0)  # zsh-progress: cp/mv show total and per-file progress bars
+DOTFILES_ZSH_PROGRESS=$(selected zsh-progress && echo 1 || echo 0)  # zsh-progress: cp/mv/rm show total and per-item progress bars
 EOF
 
   is_live || return 0

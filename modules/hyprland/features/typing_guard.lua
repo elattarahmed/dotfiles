@@ -9,8 +9,12 @@
 -- typing (a custom profile whose speed is 0), then put back. Turning it off
 -- closed the device, and a finger resting on it at that moment came back
 -- untracked: clicks still worked but the cursor no longer moved, or the
--- touchpad stayed unusable until reset. Clicks always go through, so
--- Ctrl/Shift + click works even mid-typing.
+-- touchpad stayed unusable until reset.
+--
+-- Taps are off too while typing: a palm brushing the touchpad was a tap, so a
+-- click where the pointer sat, and Neovim (or any editor) moved the text
+-- cursor there mid-sentence. A real click (pressing the touchpad down) still
+-- goes through, and Ctrl/Shift + click works anyway: a modifier ends the guard.
 --
 -- Modifier keys never start the guard, nor do keys typed with a modifier held
 -- (Ctrl+C...), and pressing a modifier ends it at once.
@@ -42,11 +46,16 @@ return function(settings)
     return profile
   end
 
+  -- Whether taps click the rest of the time (the global touchpad setting)
+  local function normal_tap()
+    return hl.get_config("input.touchpad.tap_to_click") ~= false
+  end
+
   local function thaw()
     if not frozen then return end
     frozen = false
     generation = generation + 1
-    hl.device({ name = touchpad, accel_profile = normal_profile() })
+    hl.device({ name = touchpad, accel_profile = normal_profile(), tap_to_click = normal_tap() })
   end
 
   hl.on("input.keyboard.key", function(code, _, pressed)
@@ -59,7 +68,7 @@ return function(settings)
 
     if not frozen then
       frozen = true
-      hl.device({ name = touchpad, accel_profile = FROZEN })
+      hl.device({ name = touchpad, accel_profile = FROZEN, tap_to_click = false })
     end
     generation = generation + 1
     local mine = generation

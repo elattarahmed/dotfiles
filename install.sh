@@ -60,7 +60,7 @@ ITEMS=(
   "power-profile|on|Batterie · profil d'énergie équilibré (balanced) au lieu de performance"
   "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
   "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
-  "typing-guard|off|Pavé tactile · le curseur ne bouge plus pendant la frappe jusqu'à 0,8 s après la dernière touche (paumes ignorées) · les clics passent toujours (Ctrl+clic · Maj+clic)"
+  "typing-guard|off|Pavé tactile · pendant la frappe et 0,8 s après · le curseur ne bouge plus et un effleurement (tap) ne clique plus · le clic appuyé passe toujours (Ctrl+clic · Maj+clic)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.

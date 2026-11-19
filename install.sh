@@ -35,6 +35,7 @@ ITEMS=(
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
+  "idle-lock|on|Veille · économiseur à 5 min · mot de passe dès qu'on revient · verrouillé et écran noir à 15 min"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
@@ -64,7 +65,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

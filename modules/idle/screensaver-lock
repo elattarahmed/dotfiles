@@ -1,0 +1,39 @@
+#!/bin/bash
+# Locks the session when you come back from the idle screensaver, so the
+# password is asked right away instead of returning to the desktop.
+#
+# Omarchy's lock closes the screensaver (nothing can show over a lock screen),
+# so the lock waits for the screensaver to end: when an idle-started
+# screensaver window closes (a key, a mouse move), omarchy-system-lock runs.
+# A screensaver started by hand (omarchy launch screensaver force, System →
+# Screensaver) isn't followed by a lock. Omarchy's own idle.lock timer still
+# locks and blanks the screen if the screensaver keeps running that long.
+
+set -uo pipefail
+
+SCREENSAVER_CLASS=org.omarchy.screensaver
+declare -A idle_windows=()   # screensaver windows opened by the idle timer
+
+locked() { [[ $(omarchy-shell lock isLocked 2>/dev/null) == true ]]; }
+idle_started() {
+  omarchy-shell idle status 2>/dev/null | jq -e '.screensaverStarted == true' >/dev/null
+}
+
+socket="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+
+socat -U - "UNIX-CONNECT:$socket" | while IFS= read -r event; do
+  case $event in
+    openwindow\>\>*)
+      IFS=, read -r address _ class _ <<<"${event#openwindow>>}"
+      [[ $class == "$SCREENSAVER_CLASS" ]] && idle_started && idle_windows[$address]=1
+      ;;
+    closewindow\>\>*)
+      address=${event#closewindow>>}
+      [[ -n ${idle_windows[$address]:-} ]] || continue
+      unset "idle_windows[$address]"
+      # One screensaver window per monitor: lock once the last one is gone
+      ((${#idle_windows[@]})) && continue
+      locked || omarchy-system-lock
+      ;;
+  esac
+done

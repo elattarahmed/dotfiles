@@ -1,0 +1,12 @@
+[Unit]
+Description=Lock the session when you come back from the idle screensaver
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/screensaver-lock
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

@@ -30,7 +30,7 @@ Chaque fichier remplacé est d'abord sauvegardé dans `~/.local/state/dotfiles/b
 | `zsh-p10k-style` | | reprend tel quel le style de prompt du dépôt (`modules/zsh/p10k.zsh`) au lieu de l'assistant ; il faut une police Nerd Font |
 | `zsh-line-keys` | ✓ | Ctrl/Alt + Effacer/Suppr, Alt + ←/→/↑/↓ |
 | `zsh-selection` | ✓ | sélection au clavier dans zsh, comme dans un éditeur |
-| `zsh-progress` | ✓ | `cp` et `mv` affichent deux barres de progression : la totale et celle du fichier en cours ([advcpmv](https://github.com/jarun/advcpmv), depuis l'AUR). Seulement dans le terminal : les scripts gardent les `cp`/`mv` normaux |
+| `zsh-progress` | ✓ | `cp`, `mv` et `rm` affichent deux barres de progression : la totale et celle de l'élément en cours ([advcpmv](https://github.com/jarun/advcpmv) depuis l'AUR pour `cp`/`mv`, `advrm` du dépôt pour `rm`, installé dans `/usr/local/bin` : demande le mot de passe sudo). `rm` passe la main au vrai `rm` pour `-i`, `-I`, `-v` et les fichiers protégés en écriture, donc ses questions restent les mêmes. Seulement dans le terminal : les scripts gardent les commandes normales |
 | `zsh-root` | | même shell et même config pour root |
 | `ghostty` | ✓ | Ghostty comme terminal par défaut |
 | `ghostty-font` | ✓ | texte du terminal en taille 11 au lieu de 9 (Ctrl+= / Ctrl+- / Ctrl+0 changent la taille d'une fenêtre) |

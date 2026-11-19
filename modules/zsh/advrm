@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""rm with the same two progress bars as advcp -g / advmv -g (advcpmv).
+
+  total: files removed out of all of them, space freed, speed, time left
+  item:  the argument being removed (a folder can hold thousands of files)
+
+The zsh feature zsh-progress aliases rm to this in interactive shells only.
+It handles -r/-R/--recursive, -f/--force, -d/--dir and --; anything else
+(-i, -I, -v, --one-file-system, --no-preserve-root…), and files rm would ask
+about (write-protected, without -f), go to the real rm unchanged, so every
+safety question rm asks is still asked.
+"""
+
+import errno
+import os
+import stat
+import sys
+import time
+
+REAL_RM = "/usr/bin/rm"
+WIDTH = 80
+BAR = WIDTH - 9          # "[" + bar + "]" + " 100.0 %"
+LINES = 6                # like advcp: a blank line, then two blocks of two
+FIRST_DRAW = 0.15        # seconds: quick removals print only the summary
+REDRAW = 0.1
+
+
+def real_rm():
+    os.execv(REAL_RM, ["rm"] + sys.argv[1:])
+
+
+def parse(args):
+    recursive = force = dirs = False
+    operands = []
+    only_operands = False
+    for arg in args:
+        if only_operands or arg == "-" or not arg.startswith("-"):
+            operands.append(arg)
+        elif arg == "--":
+            only_operands = True
+        elif arg in ("--recursive",):
+            recursive = True
+        elif arg == "--force":
+            force = True
+        elif arg == "--dir":
+            dirs = True
+        elif arg == "--preserve-root":
+            pass
+        elif arg.startswith("--"):
+            real_rm()
+        else:
+            for flag in arg[1:]:
+                if flag in "rR":
+                    recursive = True
+                elif flag == "f":
+                    force = True
+                elif flag == "d":
+                    dirs = True
+                else:
+                    real_rm()
+    return recursive, force, dirs, operands
+
+
+def size(n):
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if n < 1024 or unit == "TiB":
+            return f"{n:5.1f} {unit:<3}"
+        n /= 1024
+
+
+def eta(seconds):
+    if seconds is None:
+        return " 0h  0m  ?s"
+    seconds = int(seconds)
+    return f"{seconds // 3600:2d}h {seconds // 60 % 60:2d}m {seconds % 60:2d}s"
+
+
+def bar(fraction):
+    fraction = max(0.0, min(1.0, fraction))
+    filled = int(fraction * BAR)
+    inside = "=" * filled + (">" if filled < BAR else "")
+    return f"[{inside:<{BAR}}] {fraction * 100:5.1f} %"
+
+
+def line(left, right=""):
+    room = WIDTH - len(right)
+    if len(left) > room - 1:
+        left = "…" + left[-(room - 2):]
+    return f"{left:<{room}}{right}"
+
+
+class Progress:
+    def __init__(self, out, total_files, total_bytes):
+        self.out = out
+        self.total_files = max(total_files, 1)
+        self.total_bytes = total_bytes
+        self.files = self.bytes = 0
+        self.item = ""
+        self.item_files = self.item_total = 0
+        self.start = time.monotonic()
+        self.last = 0.0
+        self.drawn = False
+
+    def step(self, nbytes):
+        self.files += 1
+        self.item_files += 1
+        self.bytes += nbytes
+        now = time.monotonic()
+        if now - self.start >= FIRST_DRAW and now - self.last >= REDRAW:
+            self.draw(now)
+
+    def begin_item(self, name, total):
+        self.item, self.item_files, self.item_total = name, 0, max(total, 1)
+
+    def draw(self, now):
+        if not self.out:
+            return
+        elapsed = now - self.start
+        rate = self.files / elapsed if elapsed > 0 else 0
+        left = (self.total_files - self.files) / rate if rate > 0 else None
+        text = "\n".join([
+            "\033[K",
+            "\033[K" + line(f"{self.files} of {self.total_files} files removed (about {eta(left)} remaining)",
+                            f"{size(self.bytes)} / {size(self.total_bytes)}"),
+            "\033[K" + bar(self.files / self.total_files),
+            "\033[K" + f"removing at {rate:7.0f} files/s (about {eta(left)} remaining)",
+            "\033[K" + line(self.item, f"{self.item_files} / {self.item_total} files"),
+            "\033[K" + bar(self.item_files / self.item_total),
+        ])
+        if self.drawn:
+            self.out.write(f"\033[{LINES}A")
+        self.out.write(text + "\n")
+        self.out.flush()
+        self.drawn = True
+        self.last = now
+
+    def finish(self):
+        elapsed = time.monotonic() - self.start
+        if not self.out:
+            return
+        if self.drawn:
+            self.out.write(f"\033[{LINES}A\033[J")
+        rate = self.files / elapsed if elapsed > 0 else 0
+        self.out.write(f"{self.files} folder(s)/file(s) ({size(self.bytes).strip()}) removed in "
+                       f"{elapsed:4.1f}s ({rate:5.0f} files/s).\n")
+        self.out.flush()
+
+
+def error(path, message):
+    print(f"rm: cannot remove '{path}': {message}", file=sys.stderr)
+
+
+def scan(path, force, writable_check):
+    """(entries, bytes) under path, not following links. Sends rm the job if
+    it would ask about a write-protected file."""
+    entries = total = 0
+    stack = [path]
+    while stack:
+        current = stack.pop()
+        try:
+            st = os.lstat(current)
+        except OSError:
+            continue
+        entries += 1
+        if not stat.S_ISDIR(st.st_mode):
+            total += st.st_size
+            if writable_check and not stat.S_ISLNK(st.st_mode) and not os.access(current, os.W_OK):
+                real_rm()
+            continue
+        try:
+            with os.scandir(current) as it:
+                stack.extend(entry.path for entry in it)
+        except OSError:
+            pass
+    return entries, total
+
+
+def remove_tree(path, progress, errors):
+    """Delete path bottom-up; returns True if it is gone."""
+    try:
+        st = os.lstat(path)
+    except FileNotFoundError:
+        return True
+    if not stat.S_ISDIR(st.st_mode):
+        try:
+            os.unlink(path)
+        except OSError as e:
+            errors.append((path, e.strerror))
+            return False
+        progress.step(st.st_size)
+        return True
+    ok = True
+    try:
+        with os.scandir(path) as it:
+            children = [entry.path for entry in it]
+    except OSError as e:
+        errors.append((path, e.strerror))
+        return False
+    for child in children:
+        ok = remove_tree(child, progress, errors) and ok
+    if ok:
+        try:
+            os.rmdir(path)
+        except OSError as e:
+            errors.append((path, e.strerror))
+            return False
+        progress.step(0)
+    return ok
+
+
+def main():
+    sys.setrecursionlimit(100000)
+    recursive, force, dirs, operands = parse(sys.argv[1:])
+    if not operands:
+        real_rm()
+    ask = not force and sys.stdin.isatty()
+
+    status = 0
+    jobs = []
+    for path in operands:
+        name = path.rstrip("/") or "/"
+        if os.path.basename(name) in (".", ".."):
+            print(f"rm: refusing to remove '.' or '..' directory: skipping '{path}'", file=sys.stderr)
+            status = 1
+            continue
+        try:
+            st = os.lstat(path)
+        except FileNotFoundError:
+            if not force:
+                error(path, "No such file or directory")
+                status = 1
+            continue
+        except OSError as e:
+            error(path, e.strerror)
+            status = 1
+            continue
+        if stat.S_ISDIR(st.st_mode):
+            if os.path.realpath(path) == "/":
+                print("rm: it is dangerous to operate recursively on '/'", file=sys.stderr)
+                print("rm: use --no-preserve-root to override this failsafe", file=sys.stderr)
+                status = 1
+                continue
+            if not recursive:
+                if dirs:
+                    try:
+                        os.rmdir(path)
+                    except OSError as e:
+                        error(path, e.strerror if e.errno != errno.ENOTEMPTY else "Directory not empty")
+                        status = 1
+                else:
+                    error(path, "Is a directory")
+                    status = 1
+                continue
+        jobs.append(path)
+
+    counts = [scan(path, force, ask) for path in jobs]
+    out = sys.stdout if sys.stdout.isatty() else None
+    progress = Progress(out, sum(c[0] for c in counts), sum(c[1] for c in counts))
+    errors = []
+    for path, (entries, _) in zip(jobs, counts):
+        progress.begin_item(path, entries)
+        remove_tree(path, progress, errors)
+    if jobs:
+        progress.finish()
+    for path, message in errors:
+        error(path, message)
+    return 1 if errors else status
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("\nrm: interrompu", file=sys.stderr)
+        sys.exit(130)

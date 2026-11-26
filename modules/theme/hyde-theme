@@ -7,6 +7,10 @@
                                        last one, --missing skips installed ones)
   hyde-theme remove NAME...            delete converted themes
   hyde-theme installed                 converted themes on this machine
+  hyde-theme preview [--refresh] [--no-open]
+                                       page with every theme (all screenshots,
+                                       colors, palette once installed), opened
+                                       in the browser
 
 HyDE themes (github.com/HyDE-Project/hyde-gallery) each live in their own
 repo. Only the theme's folder is downloaded. Its terminal palette
@@ -20,6 +24,7 @@ replace one of Omarchy's own themes with the same name.
 """
 
 import colorsys
+import json
 import os
 import re
 import shutil
@@ -303,6 +308,306 @@ def install(theme):
     return dest.name
 
 
+# --- Preview page ------------------------------------------------------------
+
+GALLERY_REPO = f"https://github.com/{GALLERY}"
+GALLERY_DIR = Path(os.environ.get("HYDE_GALLERY_DIR") or CACHE / "gallery")
+SHOTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+PREVIEW_PAGE = CACHE / "preview" / "index.html"
+
+
+def local_gallery(refresh=False):
+    """The gallery repo on disk (its screenshots): cloned once, shallow."""
+    if not (GALLERY_DIR / "README.md").exists():
+        print(f"Copie locale de la galerie HyDE dans {GALLERY_DIR} (une seule fois, quelques centaines de Mo)…")
+        GALLERY_DIR.parent.mkdir(parents=True, exist_ok=True)
+        git("clone", "--depth", "1", f"{GALLERY_REPO}.git", str(GALLERY_DIR))
+    elif refresh and not GALLERY_DIR.is_symlink() and (GALLERY_DIR / ".git").exists():
+        git("pull", "--ff-only", "--depth", "1", cwd=GALLERY_DIR)
+    return GALLERY_DIR
+
+
+def gallery_details(text):
+    """Everything the README says about each theme, for the preview page."""
+    table = {}
+    row = re.compile(r"^\| \[!\[([^\]]+)\]\(https://placehold\.co/\d+x\d+/([0-9A-Fa-f]{6})/([0-9A-Fa-f]{6})[^)]*\)\][^|]*"
+                     r"\| ([^|]*) \| \[([^\]]*)\]\((https://github\.com/[^)\s]+)\)", re.M)
+    for m in row.finditer(text):
+        table[m.group(1).strip()] = {"bg": "#" + m.group(2).lower(), "fg": "#" + m.group(3).lower(),
+                                     "description": m.group(4).strip(), "author": m.group(5).strip(),
+                                     "author_url": m.group(6)}
+    themes = []
+    for m in re.finditer(r"^### (\d+)\. (.+?)\s*$(.*?)(?=^### |\Z)", text, re.M | re.S):
+        number, name, body = int(m.group(1)), m.group(2).strip(), m.group(3)
+        link = re.search(r"\[!\[[^\]]*\]\(([^)]+)\)\]\((https://github\.com/[^)\s]+)\)", body)
+        if not link:
+            continue
+        info = table.get(name, {})
+        themes.append({"number": number, "name": name, "preview": urllib.parse.unquote(link.group(1)),
+                       "url": link.group(2), **info})
+    return themes
+
+
+def read_palette(path):
+    colors = {}
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = re.match(r'^\s*([a-z_]+)\s*=\s*"(#[0-9A-Fa-f]{6})"', line)
+        if m:
+            colors[m.group(1)] = m.group(2).lower()
+    return colors
+
+
+def current_theme():
+    for link in (Path.home() / ".local/state/omarchy/current/theme", THEMES.parent / "current" / "theme"):
+        try:
+            return Path(os.path.realpath(link)).name
+        except OSError:
+            continue
+    return ""
+
+
+def shot_uris(folder, first):
+    if not folder.is_dir():
+        return []
+    files = sorted((p for p in folder.iterdir() if p.is_file() and p.suffix.lower() in SHOTS),
+                   key=lambda p: (p.name != first, p.name.lower()))
+    return [p.as_uri() for p in files]
+
+
+def preview(refresh=False, open_page=True):
+    gallery_dir = local_gallery(refresh)
+    text = (gallery_dir / "README.md").read_text(encoding="utf-8")
+    active = current_theme()
+    themes = []
+    for theme in gallery_details(text):
+        preview_path = Path(theme["preview"])
+        dest = THEMES / slug(theme["name"])
+        entry = {
+            "number": theme["number"], "name": theme["name"], "url": theme["url"],
+            "description": theme.get("description", ""), "author": theme.get("author", ""),
+            "author_url": theme.get("author_url", ""), "bg": theme.get("bg", ""), "fg": theme.get("fg", ""),
+            "shots": shot_uris(gallery_dir / preview_path.parent, preview_path.name),
+            "slug": slug(theme["name"]), "installed": dest.is_dir(), "active": dest.name == active,
+            "palette": {}, "wallpapers": [],
+        }
+        if entry["installed"]:
+            if (dest / "colors.toml").is_file():
+                entry["palette"] = read_palette(dest / "colors.toml")
+            backgrounds = dest / "backgrounds"
+            if backgrounds.is_dir():
+                entry["wallpapers"] = [p.as_uri() for p in sorted(backgrounds.iterdir())
+                                       if p.is_file() and p.suffix.lower() in IMAGES]
+        themes.append(entry)
+
+    # JSON inside <script>: no "</" so the data can't close the tag
+    data = json.dumps(themes, ensure_ascii=True).replace("</", "<\\/")
+    PREVIEW_PAGE.parent.mkdir(parents=True, exist_ok=True)
+    PREVIEW_PAGE.write_text(PREVIEW_HTML.replace("/*DATA*/[]", data), encoding="utf-8")
+    shots = sum(len(t["shots"]) for t in themes)
+    print(f"  ✓ {len(themes)} thèmes, {shots} captures → {PREVIEW_PAGE}")
+    if open_page:
+        if shutil.which("xdg-open") and os.environ.get("WAYLAND_DISPLAY", os.environ.get("DISPLAY")):
+            subprocess.Popen(["xdg-open", PREVIEW_PAGE.as_uri()], stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, start_new_session=True)
+        else:
+            print(f"  Ouvre {PREVIEW_PAGE.as_uri()} dans un navigateur.")
+
+
+PREVIEW_HTML = r"""<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thèmes HyDE</title>
+<style>
+  :root {
+    --bg: #0e0f13; --panel: #16181e; --panel-2: #1d2028; --line: #2a2e38;
+    --text: #e7e9ee; --soft: #9aa1ae; --accent: #8ab4ff; --ok: #6fd49b;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 ui-sans-serif, system-ui, "Inter", "Segoe UI", sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px 20px;
+           align-items: center; padding: 18px 28px; background: rgba(14,15,19,.92);
+           backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: .2px; }
+  h1 small { color: var(--soft); font-weight: 400; font-size: 14px; margin-left: 8px; }
+  .tools { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+  input[type=search] { width: 260px; max-width: 70vw; padding: 9px 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text); font: inherit; }
+  .chip-btn { padding: 8px 12px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--soft); font: inherit; cursor: pointer; }
+  .chip-btn[aria-pressed=true] { color: var(--text); border-color: var(--accent); }
+  main { padding: 24px 28px 60px; display: grid; gap: 22px;
+         grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+          cursor: pointer; display: flex; flex-direction: column; transition: border-color .15s, transform .15s; }
+  .card:hover, .card:focus-visible { border-color: var(--accent); transform: translateY(-2px); outline: none; }
+  .thumb { aspect-ratio: 16/9; background: var(--panel-2); position: relative; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .count { position: absolute; right: 10px; bottom: 10px; padding: 2px 8px; border-radius: 99px;
+                  background: rgba(0,0,0,.6); font-size: 12px; }
+  .body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .title { display: flex; align-items: center; gap: 10px; }
+  .title h2 { margin: 0; font-size: 16px; font-weight: 620; flex: 1; }
+  .swatches { display: flex; gap: 6px; }
+  .sw { width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgba(255,255,255,.15); }
+  .desc { color: var(--soft); font-size: 13.5px; margin: 0; }
+  .badge { font-size: 11.5px; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--soft); }
+  .badge.ok { color: var(--ok); border-color: rgba(111,212,155,.4); }
+  .badge.on { color: var(--bg); background: var(--ok); border-color: var(--ok); }
+  .empty { grid-column: 1/-1; text-align: center; color: var(--soft); padding: 60px 0; }
+  dialog { width: min(1200px, 94vw); max-height: 92vh; padding: 0; border: 1px solid var(--line);
+           border-radius: 16px; background: var(--panel); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.7); }
+  .dlg-head { display: flex; gap: 14px; align-items: flex-start; padding: 20px 24px 6px; }
+  .dlg-head h2 { margin: 0 0 4px; font-size: 22px; }
+  .dlg-head .meta { color: var(--soft); font-size: 14px; }
+  .dlg-head a { color: var(--accent); text-decoration: none; }
+  .close { margin-left: auto; font-size: 22px; line-height: 1; background: none; border: 0; color: var(--soft); cursor: pointer; }
+  .dlg-body { padding: 10px 24px 24px; overflow: auto; max-height: calc(92vh - 90px); }
+  .stage { background: #000; border-radius: 12px; overflow: hidden; }
+  .stage img { width: 100%; max-height: 64vh; object-fit: contain; display: block; }
+  .strip { display: flex; gap: 8px; margin: 10px 0 18px; overflow-x: auto; }
+  .strip img { height: 72px; aspect-ratio: 16/9; object-fit: cover; border-radius: 7px; cursor: pointer;
+               border: 2px solid transparent; opacity: .7; }
+  .strip img[aria-current=true] { border-color: var(--accent); opacity: 1; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); margin: 18px 0 8px; }
+  .palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .pc { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; font-size: 12px; }
+  .pc i { display: block; height: 34px; }
+  .pc span { display: block; padding: 4px 8px; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .walls { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .walls img { width: 100%; aspect-ratio: 16/10; object-fit: cover; border-radius: 8px; }
+  .cmd { display: flex; gap: 8px; align-items: center; background: var(--bg); border: 1px solid var(--line);
+         border-radius: 9px; padding: 8px 8px 8px 12px; font: 13px ui-monospace, "JetBrains Mono", monospace; }
+  .cmd code { flex: 1; overflow-x: auto; white-space: nowrap; }
+  .note { color: var(--soft); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Thèmes HyDE<small id="count"></small></h1>
+  <div class="tools">
+    <input type="search" id="q" placeholder="Rechercher un thème, une couleur, un auteur…" autofocus>
+    <button class="chip-btn" id="only" aria-pressed="false">Installés seulement</button>
+  </div>
+</header>
+<main id="grid"></main>
+<dialog id="dlg">
+  <div class="dlg-head">
+    <div><h2 id="d-name"></h2><div class="meta" id="d-meta"></div></div>
+    <button class="close" id="d-close" aria-label="Fermer">×</button>
+  </div>
+  <div class="dlg-body">
+    <div class="stage"><img id="d-stage" alt=""></div>
+    <div class="strip" id="d-strip"></div>
+    <div class="cmd"><code id="d-cmd"></code><button class="chip-btn" id="d-copy">Copier</button></div>
+    <div id="d-installed"></div>
+  </div>
+</dialog>
+<script>
+const THEMES = /*DATA*/[];
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "text") n.textContent = v; else if (k === "style") n.style.cssText = v; else n.setAttribute(k, v);
+  }
+  kids.forEach((k) => k && n.append(k));
+  return n;
+};
+const safeColor = (c) => /^#[0-9a-f]{6}$/i.test(c || "") ? c : "";
+const safeHttp = (u) => /^https:\/\/github\.com\//.test(u || "") ? u : "";
+
+function card(t) {
+  const shot = t.shots[0];
+  const thumb = el("div", { class: "thumb" },
+    shot ? el("img", { src: shot, alt: "", loading: "lazy", decoding: "async" }) : null,
+    t.shots.length > 1 ? el("span", { class: "count", text: t.shots.length + " captures" }) : null);
+  const sw = el("div", { class: "swatches" });
+  [t.bg, t.fg].map(safeColor).filter(Boolean).forEach((c) => sw.append(el("i", { class: "sw", style: "background:" + c, title: c })));
+  const title = el("div", { class: "title" }, el("h2", { text: t.name }), sw);
+  const badges = el("div", { class: "title" });
+  if (t.active) badges.append(el("span", { class: "badge on", text: "Thème actuel" }));
+  else if (t.installed) badges.append(el("span", { class: "badge ok", text: "Installé" }));
+  if (t.author) badges.append(el("span", { class: "badge", text: "par " + t.author }));
+  const c = el("article", { class: "card", tabindex: "0" }, thumb,
+    el("div", { class: "body" }, title, el("p", { class: "desc", text: t.description }), badges));
+  c.addEventListener("click", () => open(t));
+  c.addEventListener("keydown", (e) => { if (e.key === "Enter") open(t); });
+  return c;
+}
+
+function render() {
+  const q = $("q").value.trim().toLowerCase();
+  const only = $("only").getAttribute("aria-pressed") === "true";
+  const list = THEMES.filter((t) => (!only || t.installed) &&
+    (!q || [t.name, t.description, t.author, t.bg, t.fg].join(" ").toLowerCase().includes(q)));
+  $("grid").replaceChildren(...(list.length ? list.map(card) : [el("p", { class: "empty", text: "Aucun thème ne correspond." })]));
+  $("count").textContent = list.length + " / " + THEMES.length;
+}
+
+function open(t) {
+  $("d-name").textContent = t.name;
+  const meta = $("d-meta");
+  meta.replaceChildren(document.createTextNode((t.description || "") + " "));
+  const repo = safeHttp(t.url);
+  if (repo) meta.append(el("a", { href: repo, target: "_blank", rel: "noopener", text: "Dépôt du thème ↗" }));
+  if (t.author) meta.append(document.createTextNode(" · par " + t.author));
+
+  const stage = $("d-stage"), strip = $("d-strip");
+  const show = (i) => {
+    stage.src = t.shots[i] || "";
+    [...strip.children].forEach((img, j) => img.setAttribute("aria-current", String(i === j)));
+  };
+  strip.replaceChildren(...t.shots.map((s, i) => {
+    const img = el("img", { src: s, alt: "", loading: "lazy" });
+    img.addEventListener("click", () => show(i));
+    return img;
+  }));
+  strip.style.display = t.shots.length > 1 ? "" : "none";
+  show(0);
+
+  const cmd = t.installed ? 'omarchy theme set ' + t.slug : 'hyde-theme install "' + t.name + '" --set';
+  $("d-cmd").textContent = cmd;
+  $("d-copy").textContent = "Copier";
+  $("d-copy").onclick = () => navigator.clipboard.writeText(cmd).then(() => $("d-copy").textContent = "Copié ✓");
+
+  const box = $("d-installed");
+  box.replaceChildren();
+  if (t.installed) {
+    const pal = el("div", { class: "palette" });
+    Object.entries(t.palette).forEach(([k, v]) => {
+      const c = safeColor(v);
+      if (c) pal.append(el("div", { class: "pc" }, el("i", { style: "background:" + c }), el("span", { text: k + " " + c })));
+    });
+    box.append(el("h3", { text: "Palette Omarchy (colors.toml)" }), pal);
+    if (t.wallpapers.length) {
+      const walls = el("div", { class: "walls" });
+      t.wallpapers.forEach((w) => walls.append(el("img", { src: w, alt: "", loading: "lazy" })));
+      box.append(el("h3", { text: "Fonds d'écran (" + t.wallpapers.length + ")" }), walls);
+    }
+  } else {
+    box.append(el("p", { class: "note", text: "Pas encore installé : la commande ci-dessus le convertit pour Omarchy et l'applique." }));
+  }
+  $("dlg").showModal();
+}
+
+$("q").addEventListener("input", render);
+$("only").addEventListener("click", (e) => {
+  const b = e.currentTarget; b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); render();
+});
+$("d-close").addEventListener("click", () => $("dlg").close());
+$("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlg").close(); });
+render();
+</script>
+</body>
+</html>
+"""
+
+
 def main(argv):
     if not argv or argv[0] in ("-h", "--help", "help"):
         print(__doc__.strip())
@@ -313,6 +618,8 @@ def main(argv):
         for theme in gallery(refresh="--refresh" in args):
             mark = "✓" if (THEMES / slug(theme["name"])).exists() else " "
             print(f"{mark} {theme['name']:<24} {theme['description'][:90]}")
+    elif command == "preview":
+        preview(refresh="--refresh" in args, open_page="--no-open" not in args)
     elif command == "installed":
         for path in sorted(THEMES.glob(PREFIX + "*")):
             print(path.name)

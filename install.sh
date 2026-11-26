@@ -302,7 +302,7 @@ TIPS=()
 selected neovim-themes && TIPS+=("Thème de Neovim : <leader>uC ou :Theme (aperçu, Entrée pour garder) · :Theme omarchy pour suivre Omarchy")
 selected git-ssh && TIPS+=("Cloner avec un compte : git clone git@github-<alias>:<owner>/<repo>.git (le repo garde ce compte) · ./install.sh git-ssh pour en ajouter un")
 TIPS+=("Fond d'écran : Super+Ctrl+Espace · omarchy theme bg set <image>")
-selected hyde-themes && TIPS+=("Thèmes et fonds HyDE : hyde-theme list, puis hyde-theme install \"<Nom>\" --set")
+selected hyde-themes && TIPS+=("Thèmes et fonds HyDE : hyde-theme preview (aperçu dans le navigateur), puis hyde-theme install \"<Nom>\" --set")
 TIPS+=("Écran de déverrouillage du disque : menu Super+Espace → Appearance → Unlock · omarchy plymouth list")
 if selected screensaver; then
   TIPS+=("Économiseur : omarchy launch screensaver force pour le voir · screensaver-text set \"Texte\" pour le changer")

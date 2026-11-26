@@ -26,8 +26,10 @@ if [[ ${1:-} != --detached ]]; then
   # The fingerprint is offered when sudo's PAM file has pam_fprintd, a finger
   # is enrolled, and the lid is open (Omarchy skips the reader when closed).
   fingerprint=0
+  # pam_exec runs this as sudo's real user (no seteuid on the PAM line), and
+  # /var/lib/fprint is root-only: then pam_fprintd in the file has to do.
   if grep -qE '^[[:space:]]*auth[[:space:]].*pam_fprintd' /etc/pam.d/sudo &&
-    compgen -G "/var/lib/fprint/$user/*" >/dev/null; then
+    { [[ ! -r /var/lib/fprint ]] || compgen -G "/var/lib/fprint/$user/*" >/dev/null; }; then
     fingerprint=1
     for state in /proc/acpi/button/lid/*/state; do
       [[ -r $state && $(<"$state") == *closed* ]] && fingerprint=0
@@ -44,11 +46,17 @@ home=$(getent passwd "$user" | cut -d: -f6)
 run=/run/user/$uid
 sig=$(ls -t "$run/hypr" 2>/dev/null | head -n 1)
 
+# As root, switch to the user; as the user already (pam_exec's default),
+# setpriv would fail, so run directly
 as_user() {
-  setpriv --reuid="$uid" --regid="$gid" --init-groups \
-    env -i HOME="$home" USER="$user" PATH=/usr/local/bin:/usr/bin \
-    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus" \
-    HYPRLAND_INSTANCE_SIGNATURE="$sig" "$@"
+  local env=(env -i HOME="$home" USER="$user" PATH=/usr/local/bin:/usr/bin
+    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus"
+    HYPRLAND_INSTANCE_SIGNATURE="$sig")
+  if ((EUID == 0)); then
+    setpriv --reuid="$uid" --regid="$gid" --init-groups "${env[@]}" "$@"
+  else
+    "${env[@]}" "$@"
+  fi
 }
 
 # The terminal window: the closest ancestor of sudo that owns a window.

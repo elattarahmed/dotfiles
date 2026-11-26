@@ -10,9 +10,13 @@
 # The PAM lines are optional and this returns at once: everything past a few
 # checks runs detached, so it can never hold sudo up or make it fail.
 # Installed as a root-owned copy, never a link into the repo.
+#
+# pam_exec runs it as sudo's *real* user (the one typing, not root) unless
+# the PAM line has `seteuid`, so it works either way: as root it switches to
+# the user to reach the shell, as the user it calls the shell directly and
+# keeps its state in the user's runtime directory.
 
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/share/omarchy/bin
-STATE=/run/dotfiles-sudo-prompt
 
 if [[ ${1:-} != --detached ]]; then
   phase=${1:-}
@@ -30,7 +34,11 @@ if [[ ${1:-} != --detached ]]; then
     # Only when the reader will really be asked: pam_fprintd in sudo's PAM
     # file, a finger enrolled, the lid open (Omarchy skips it when closed)
     grep -qE '^[[:space:]]*auth[[:space:]].*pam_fprintd' /etc/pam.d/sudo || exit 0
-    compgen -G "/var/lib/fprint/$user/*" >/dev/null || exit 0
+    # /var/lib/fprint is root-only: checked only when this runs as root (as
+    # the user, an unenrolled reader just moves on to the password at once)
+    if [[ -r /var/lib/fprint ]]; then
+      compgen -G "/var/lib/fprint/$user/*" >/dev/null || exit 0
+    fi
     for state in /proc/acpi/button/lid/*/state; do
       [[ -r $state && $(<"$state") == *closed* ]] && exit 0
     done
@@ -48,14 +56,19 @@ run=/run/user/$uid
 sig=$(ls -t "$run/hypr" 2>/dev/null | head -n 1)
 
 as_user() {
-  setpriv --reuid="$uid" --regid="$gid" --init-groups \
-    env -i HOME="$home" USER="$user" PATH="$PATH" OMARCHY_PATH=/usr/share/omarchy \
-    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus" \
-    HYPRLAND_INSTANCE_SIGNATURE="$sig" "$@"
+  local env=(env -i HOME="$home" USER="$user" PATH="$PATH" OMARCHY_PATH=/usr/share/omarchy
+    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus"
+    HYPRLAND_INSTANCE_SIGNATURE="$sig")
+  if ((EUID == 0)); then
+    setpriv --reuid="$uid" --regid="$gid" --init-groups "${env[@]}" "$@"
+  else
+    "${env[@]}" "$@"
+  fi
 }
 prompt() { as_user timeout 5 omarchy-shell -q sudo-prompt "$@" >/dev/null 2>&1; }
 
-install -d -m 700 "$STATE"
+if ((EUID == 0)); then STATE=/run/dotfiles-sudo-prompt; else STATE=$run/dotfiles-sudo-prompt; fi
+install -d -m 700 "$STATE" || exit 0
 mark="$STATE/$sudo_pid"
 
 if [[ $phase == "done" ]]; then

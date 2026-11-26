@@ -49,6 +49,7 @@ ITEMS=(
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "ligatures|on|AltGr+O → œ au lieu de ø · AltGr+A → æ (avec Maj : Œ Æ)"
   "lockscreen-layout|on|Écran de verrouillage dans la même disposition clavier que la session (utile seulement avec fcitx5)"
+  "lockscreen-info|off|Écran de verrouillage · grande heure et date · batterie · musique en cours (clone du verrouillage d'Omarchy · omarchy-shell lock preview pour le voir)"
   "apps|on|Applications en terminal · tree · glow (Markdown) · pacseek (recherche de paquets)"
   "neovim-spell|on|Neovim · correcteur orthographique français + anglais"
   "neovim-themes|on|Neovim · choisir son thème à part de celui d'Omarchy (<leader>uC ou :Theme)"
@@ -66,7 +67,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)
@@ -302,7 +303,7 @@ TIPS=()
 selected neovim-themes && TIPS+=("Thème de Neovim : <leader>uC ou :Theme (aperçu, Entrée pour garder) · :Theme omarchy pour suivre Omarchy")
 selected git-ssh && TIPS+=("Cloner avec un compte : git clone git@github-<alias>:<owner>/<repo>.git (le repo garde ce compte) · ./install.sh git-ssh pour en ajouter un")
 TIPS+=("Fond d'écran : Super+Ctrl+Espace · omarchy theme bg set <image>")
-selected hyde-themes && TIPS+=("Thèmes et fonds HyDE : hyde-theme list, puis hyde-theme install \"<Nom>\" --set")
+selected hyde-themes && TIPS+=("Thèmes et fonds HyDE : hyde-theme preview (aperçu dans le navigateur), puis hyde-theme install \"<Nom>\" --set")
 TIPS+=("Écran de déverrouillage du disque : menu Super+Espace → Appearance → Unlock · omarchy plymouth list")
 if selected screensaver; then
   TIPS+=("Économiseur : omarchy launch screensaver force pour le voir · screensaver-text set \"Texte\" pour le changer")

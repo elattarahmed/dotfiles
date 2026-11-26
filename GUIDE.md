@@ -112,12 +112,15 @@ Chaque thème a ses propres fonds d'écran : changer de thème change aussi le f
 L'élément `hyde-themes` installe la commande `hyde-theme`. Elle convertit les thèmes de la galerie HyDE (https://github.com/HyDE-Project/hyde-gallery) en thèmes Omarchy, **avec tous leurs fonds d'écran**.
 
 ```bash
+hyde-theme preview                      # tous les thèmes dans le navigateur, avec leurs captures
 hyde-theme list                         # les thèmes de la galerie, avec leur description
 hyde-theme install "Catppuccin Mocha"   # télécharge et convertit (devient « hyde-catppuccin-mocha »)
 hyde-theme install "Catppuccin Mocha" --set   # pareil, et l'applique tout de suite
 hyde-theme installed                    # ceux déjà convertis
 hyde-theme remove "Catppuccin Mocha"    # supprime la version convertie
 ```
+
+`hyde-theme preview` génère une page locale (`~/.cache/hyde-theme/preview/index.html`) et l'ouvre : chaque thème avec toutes ses captures (clic pour les voir en grand), ses couleurs, son auteur, et la commande pour l'installer à copier. Pour un thème déjà installé, elle montre aussi sa palette Omarchy et ses fonds d'écran. Les captures viennent d'une copie locale de la galerie, faite une seule fois dans `~/.cache/hyde-theme/gallery` (quelques centaines de Mo) ; `HYDE_GALLERY_DIR=<dossier>` en utilise une autre, par exemple un clone déjà présent. `hyde-theme preview --refresh` met cette copie à jour.
 
 Pour choisir un fond d'écran HyDE :
 

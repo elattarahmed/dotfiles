@@ -38,6 +38,7 @@ ITEMS=(
   "sudo-prompt|off|Fenêtre façon macOS quand sudo attend · empreinte puis mot de passe dans le terminal · ✓ autorisé (remplace la notification de sudo-notify)"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "idle-lock|on|Veille · économiseur à 5 min · mot de passe dès qu'on revient · verrouillé et écran noir à 15 min"
+  "session-restore|on|Session · à la connexion les fenêtres et applis rouvertes à leur place · onglets Ghostty avec leur dossier (et nvim…)"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
@@ -69,7 +70,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile builtin-mic adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle builtin-mic session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)
@@ -122,10 +123,12 @@ item_ids() {
   for item in "${ITEMS[@]}"; do echo "${item%%|*}"; done
 }
 
-is_item() { item_ids | grep -qxF -- "$1"; }
+# grep reads the whole list (no -q): with pipefail, grep -q quitting at the
+# first match could fail the pipe when the writer had not finished yet.
+is_item() { item_ids | grep -xF -- "$1" >/dev/null; }
 
-selected() { printf '%s\n' "${SELECTED[@]}" | grep -qxF -- "$1"; }
-explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -qxF -- "$1"; }
+selected() { printf '%s\n' "${SELECTED[@]}" | grep -xF -- "$1" >/dev/null; }
+explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -xF -- "$1" >/dev/null; }
 
 # module_handles MODULE ITEM: whether the module acts on that item, read from
 # its code: `selected ITEM`/`explicit ITEM`, a "ITEM|..." entry (Hyprland

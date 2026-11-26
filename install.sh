@@ -62,13 +62,14 @@ ITEMS=(
   "ssh-server|off|Serveur SSH · connexion depuis un autre ordinateur du réseau local seulement"
   "display-scale|off|Échelle de l'écran (demande la valeur)"
   "power-profile|on|Batterie · profil d'énergie équilibré (balanced) au lieu de performance"
+  "builtin-mic|on|Framework 13 AMD · le vrai micro intégré par défaut (pas le micro fantôme · ni la prise jack vide · ni les AirPods) · enregistrement d'écran compris"
   "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
   "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
   "typing-guard|off|Pavé tactile · pendant la frappe et 0,8 s après · le curseur ne bouge plus et un effleurement (tap) ne clique plus · le clic appuyé passe toujours (Ctrl+clic · Maj+clic)"
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile builtin-mic adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

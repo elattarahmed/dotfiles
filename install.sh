@@ -31,6 +31,7 @@ ITEMS=(
   "gestures|on|Glisser à 3 doigts ←/→ · changer de workspace"
   "zoom|on|Zoom façon macOS · clic à 3 doigts puis glisser ↑/↓ · remis à zéro pendant le verrouillage"
   "workspace-animation|on|Animation de glissement entre les workspaces"
+  "rounded-corners|on|Coins légèrement arrondis (8 px) · fenêtres et aussi barre · menus · fenêtres du shell"
   "no-middle-paste|on|Pavé tactile · le clic/tap à 3 doigts ne colle jamais (même avec Maj/Ctrl/Alt) · il ne sert qu'au zoom"
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"

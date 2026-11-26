@@ -38,6 +38,7 @@ ITEMS=(
   "sudo-prompt|off|Fenêtre façon macOS quand sudo attend · empreinte puis mot de passe dans le terminal · ✓ autorisé (remplace la notification de sudo-notify)"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "idle-lock|on|Veille · économiseur à 5 min · mot de passe dès qu'on revient · verrouillé et écran noir à 15 min"
+  "session-restore|on|Session · à la connexion les fenêtres et applis rouvertes à leur place · onglets Ghostty avec leur dossier (et nvim…)"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
   "screenshot-keys|on|Super+Maj+S · capture d'écran comme Impr écran (au lieu de Google Maps)"
   "emojis|on|Sélecteur d'émojis · l'émoji sélectionné entouré d'une bordure claire"
@@ -68,7 +69,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

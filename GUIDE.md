@@ -290,7 +290,35 @@ Limites : une paume posée pendant une pause de plus de 0,8 s redevient un doigt
 
 ---
 
-## 8. Le reste
+## 8. Rouvrir la session après l'extinction
+
+Avec l'élément `session-restore` (coché par défaut), tout ce qui était ouvert revient à la connexion suivante, **chaque fenêtre sur son bureau et à sa place** :
+
+- **les applications** (Brave, Discord, Evince avec son PDF…), relancées avec la même commande et le même dossier ;
+- **les fenêtres Ghostty avec tous leurs onglets**, chacun dans son dossier. Un onglet où tournait `nvim`, `lazygit`, `btop`, `htop`, `yazi`, `less`, `man`, `glow` ou `tig` relance ce programme ; une autre commande (un build, un serveur) n'est jamais relancée ;
+- pour une fenêtre flottante, sa position et sa taille ; le plein écran et l'épinglage.
+
+Une notification « Session rouverte » s'affiche quand c'est fini.
+
+**Comment ça marche.** Le service `dotfiles-session` garde un instantané à jour pendant que tu travailles : quelques secondes après chaque changement de fenêtre, et chaque minute pour les dossiers des terminaux. Il le **gèle** dès que la session se termine (Logout, Reboot, Shutdown du menu Omarchy, ou `systemctl poweroff`), car Omarchy ferme d'abord toutes les fenêtres. Après une coupure de courant ou un plantage, c'est le dernier instantané qui revient.
+
+| Action | Commande |
+|---|---|
+| Voir ce qui sera rouvert | `dotfiles-session show` |
+| Enregistrer tout de suite | `dotfiles-session save` |
+| Ne rien rouvrir à la prochaine connexion (une fois) | `dotfiles-session clear` |
+| Rouvrir maintenant la session enregistrée | `dotfiles-session restore` |
+| Onglets ouverts avant l'installation | `dotfiles-session map` (une fois : chaque onglet s'affiche un instant) |
+
+**Les onglets d'une application** (Brave, VS Code) sont rouverts par l'application elle-même. Dans Brave : **Paramètres → Au démarrage → Reprendre là où je me suis arrêté**.
+
+**Ce qui n'est pas rouvert :** les machines virtuelles QEMU (elles redémarreraient de zéro), les fenêtres d'Omarchy (économiseur, sélecteurs) et les boîtes de dialogue. Pour exclure ou ajouter une application, mets dans `~/.config/dotfiles/session.conf` une ligne `skip: <classe>` ou `unskip: qemu` (`hyprctl clients` donne la classe). `restore: off` désactive la réouverture mais garde l'instantané.
+
+**Limites :** l'ordre des fenêtres en mosaïque sur un même bureau peut différer un peu, et l'onglet actif d'une fenêtre Ghostty n'est pas retenu (c'est le dernier ouvert qui l'est).
+
+---
+
+## 9. Le reste
 
 - Thème complet du bureau (terminal, barre, verrouillage, fond…) : `Super+Ctrl+T`, ou menu **Appearance → Theme**.
 - Tous les raccourcis clavier : `Super+K`.

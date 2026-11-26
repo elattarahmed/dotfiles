@@ -3,6 +3,41 @@
 [[ -r ~/.config/zsh/dotfiles.zsh ]] && source ~/.config/zsh/dotfiles.zsh
 : ${DOTFILES_ZSH_LINE_KEYS:=1} ${DOTFILES_ZSH_SELECTION:=1} ${DOTFILES_ZSH_P10K:=1} ${DOTFILES_ZSH_PROGRESS:=1}
 
+# Session restore (dotfiles-session, item session-restore). A Ghostty tab
+# reopened after a shutdown takes its saved folder from the queue here (no
+# output: safe above the instant prompt), and every tab notes which window it
+# is in, which Ghostty itself doesn't tell, so the next save knows each
+# window's tabs.
+if [[ -n ${GHOSTTY_SURFACE_ID:-} && -n ${HYPRLAND_INSTANCE_SIGNATURE:-} && -x ~/.local/bin/dotfiles-session ]]; then
+  _dotfiles_session=${XDG_RUNTIME_DIR:-/run/user/$UID}/dotfiles-session
+  () {
+    local f folder
+    for f in $_dotfiles_session/queue/*.tab(N); do
+      # mv is atomic: two tabs starting together never take the same entry
+      mv -- $f $f.$$ 2>/dev/null || continue
+      { IFS= read -r folder; IFS= read -r _dotfiles_session_cmd } <$f.$$
+      rm -f -- $f.$$
+      [[ -d $folder ]] && cd -- $folder
+      return
+    done
+  }
+  # The window this tab is in: the focused one when a command starts (you
+  # typed it there) and when the tab opens. At most once a minute.
+  zmodload zsh/datetime
+  typeset -gi _dotfiles_session_seen=0
+  _dotfiles_session_where() {
+    (( EPOCHSECONDS - _dotfiles_session_seen < 60 )) && return
+    local -a lines=("${(@f)$(hyprctl activewindow 2>/dev/null)}")
+    [[ ${lines[1]} == Window\ * && -n ${(M)lines:#*class: com.mitchellh.ghostty} ]] || return
+    _dotfiles_session_seen=$EPOCHSECONDS
+    mkdir -p $_dotfiles_session/surfaces
+    print -r -- "0x${${lines[1]#Window }%% *} $$" >| $_dotfiles_session/surfaces/$GHOSTTY_SURFACE_ID
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook preexec _dotfiles_session_where
+  _dotfiles_session_where
+fi
+
 # Powerlevel10k instant prompt — keep near the top. Anything that needs
 # console input (passwords, [y/n] prompts) must go above this block.
 if (( DOTFILES_ZSH_P10K )) && [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
@@ -202,3 +237,16 @@ ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(deselect-up-line-or-beginning-search deselect-do
 # Your own exports, aliases and functions go in ~/.zshrc.local, which this
 # repo never overwrites.
 [[ -r ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# A reopened tab starts its program again (nvim, lazygit…: see dotfiles-session)
+if [[ -n ${_dotfiles_session_cmd:-} ]]; then
+  autoload -Uz add-zle-hook-widget
+  _dotfiles_session_run() {
+    add-zle-hook-widget -d line-init _dotfiles_session_run
+    BUFFER=$_dotfiles_session_cmd
+    unset _dotfiles_session_cmd
+    zle accept-line
+  }
+  zle -N _dotfiles_session_run
+  add-zle-hook-widget line-init _dotfiles_session_run
+fi

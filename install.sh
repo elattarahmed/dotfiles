@@ -34,6 +34,7 @@ ITEMS=(
   "no-middle-paste|on|Pavé tactile · le clic/tap à 3 doigts ne colle jamais (même avec Maj/Ctrl/Alt) · il ne sert qu'au zoom"
   "plymouth|on|Écran de démarrage (mot de passe du disque) aux couleurs Matte Black"
   "sudo-notify|on|Notification quand sudo attend ton mot de passe ou ton empreinte · clic pour aller au terminal"
+  "sudo-prompt|off|Fenêtre façon macOS quand sudo attend · empreinte puis mot de passe dans le terminal · ✓ autorisé (remplace la notification de sudo-notify)"
   "screensaver|on|Économiseur d'écran · ton texte en huit polices ASCII qui tournent (screensaver-text pour le changer)"
   "idle-lock|on|Veille · économiseur à 5 min · mot de passe dès qu'on revient · verrouillé et écran noir à 15 min"
   "clipboard|on|Historique du presse-papiers avec épingles (Alt+Maj+V) et bouton dans la barre"
@@ -66,7 +67,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

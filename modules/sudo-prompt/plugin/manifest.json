@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.sudo-prompt",
+  "name": "sudo prompt",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "A small window, like the polkit one, while sudo waits for a fingerprint or a password in a terminal.",
+  "kinds": [
+    "service"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "SudoPrompt.qml"
+  }
+}

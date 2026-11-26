@@ -1,0 +1,100 @@
+#!/bin/bash
+# Run as root by pam_exec from /etc/pam.d/sudo, to drive the sudo-prompt
+# window (the dotfiles.sudo-prompt shell plugin) on the desktop of the user
+# sudo is asking:
+#
+#   sudo-prompt fingerprint   auth, before the fingerprint: window opens
+#   sudo-prompt password      auth, after the fingerprint: "type it in the terminal"
+#   sudo-prompt done          session: sudo authenticated, the window says so
+#
+# The PAM lines are optional and this returns at once: everything past a few
+# checks runs detached, so it can never hold sudo up or make it fail.
+# Installed as a root-owned copy, never a link into the repo.
+
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/share/omarchy/bin
+STATE=/run/dotfiles-sudo-prompt
+
+if [[ ${1:-} != --detached ]]; then
+  phase=${1:-}
+  case "$phase:${PAM_TYPE:-}" in
+    fingerprint:auth | password:auth | done:open_session) ;;
+    *) exit 0 ;;
+  esac
+  user=${PAM_RUSER:-${PAM_USER:-}}
+  uid=$(id -u -- "$user" 2>/dev/null) || exit 0
+  [[ -S /run/user/$uid/bus ]] || exit 0
+  # sudo over SSH: nobody is in front of this desktop
+  tr '\0' '\n' <"/proc/$PPID/environ" 2>/dev/null | grep -q '^SSH_CONNECTION=' && exit 0
+
+  if [[ $phase == fingerprint ]]; then
+    # Only when the reader will really be asked: pam_fprintd in sudo's PAM
+    # file, a finger enrolled, the lid open (Omarchy skips it when closed)
+    grep -qE '^[[:space:]]*auth[[:space:]].*pam_fprintd' /etc/pam.d/sudo || exit 0
+    compgen -G "/var/lib/fprint/$user/*" >/dev/null || exit 0
+    for state in /proc/acpi/button/lid/*/state; do
+      [[ -r $state && $(<"$state") == *closed* ]] && exit 0
+    done
+  fi
+
+  export phase user uid sudo_pid=$PPID
+  setsid -f "$0" --detached </dev/null >/dev/null 2>&1
+  exit 0
+fi
+
+gid=$(id -g -- "$user")
+home=$(getent passwd "$user" | cut -d: -f6)
+run=/run/user/$uid
+# shellcheck disable=SC2012 # instance names are plain hex_ids
+sig=$(ls -t "$run/hypr" 2>/dev/null | head -n 1)
+
+as_user() {
+  setpriv --reuid="$uid" --regid="$gid" --init-groups \
+    env -i HOME="$home" USER="$user" PATH="$PATH" OMARCHY_PATH=/usr/share/omarchy \
+    XDG_RUNTIME_DIR="$run" DBUS_SESSION_BUS_ADDRESS="unix:path=$run/bus" \
+    HYPRLAND_INSTANCE_SIGNATURE="$sig" "$@"
+}
+prompt() { as_user timeout 5 omarchy-shell -q sudo-prompt "$@" >/dev/null 2>&1; }
+
+install -d -m 700 "$STATE"
+mark="$STATE/$sudo_pid"
+
+if [[ $phase == "done" ]]; then
+  # Only a sudo that asked has a window and a watcher (not one still within
+  # its timestamp)
+  [[ -e $mark.watch ]] || exit 0
+  : >"$mark.ok"
+  prompt end "$sudo_pid" ok
+  exit 0
+fi
+
+# What sudo was asked to run, for the line above the window
+command=$(tr '\0' ' ' <"/proc/$sudo_pid/cmdline" 2>/dev/null | head -c 300)
+
+# The terminal window: the closest ancestor of sudo that owns a window (as in
+# sudo-auth-notify), so a click on the window can bring it forward
+address=''
+if [[ -n $sig ]] && clients=$(as_user hyprctl clients -j 2>/dev/null); then
+  pid=$sudo_pid
+  while ((pid > 1)); do
+    address=$(jq -r --argjson pid "$pid" '[.[] | select(.pid == $pid)] | sort_by(.focusHistoryID) | .[0].address // empty' <<<"$clients")
+    [[ -n $address ]] && break
+    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+    [[ -n $pid ]] || break
+  done
+fi
+
+prompt begin "$sudo_pid" "$phase" "$command" "$address"
+
+# One watcher per sudo: when it ends without having authenticated (wrong
+# password three times, Ctrl+C), the window says so and closes
+exec 9>"$mark.watch"
+flock -n 9 || exit 0
+started=$(awk '{print $22}' "/proc/$sudo_pid/stat" 2>/dev/null)
+for ((i = 0; i < 1200; i++)); do
+  [[ -f $mark.ok ]] && break
+  [[ $(awk '{print $22}' "/proc/$sudo_pid/stat" 2>/dev/null) == "$started" ]] || break
+  sleep 0.25
+done
+[[ -f $mark.ok ]] || prompt end "$sudo_pid" fail
+rm -f "$mark.ok" "$mark.watch"
+exit 0

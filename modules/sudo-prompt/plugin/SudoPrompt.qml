@@ -1,7 +1,11 @@
 // A small window, styled like Omarchy's polkit dialog, while sudo waits in a
 // terminal: the fingerprint first, then the password. It never takes the
-// keyboard: the password is still typed in the terminal (sudo reads it there),
-// and a click on the window brings that terminal forward.
+// keyboard or the mouse (clicks go through it): the password is typed in the
+// terminal, where sudo reads it.
+//
+// sudo can't take the password while it waits for the fingerprint (PAM runs
+// one module at a time, see pam_fprintd(8) LIMITATIONS), so the window counts
+// down the fingerprint's timeout: when it runs out, sudo asks for the password.
 //
 // Driven by /usr/local/lib/dotfiles/sudo-prompt (pam_exec lines in
 // /etc/pam.d/sudo) through `omarchy-shell sudo-prompt <function> ...`.
@@ -19,7 +23,7 @@ Item {
   property string requestId: ""
   property string phase: ""       // fingerprint | password | ok | fail
   property string command: ""
-  property string address: ""     // the terminal window, for the click
+  property int remaining: 0       // seconds before sudo asks for the password
   property bool shown: false
   property real shakeOffset: 0
 
@@ -43,13 +47,13 @@ Item {
     closeTimer.restart()
   }
 
-  // Same dispatch as sudo-auth-notify: the Lua form, then the legacy one.
-  // The address was checked to be 0x + hex, so nothing else reaches the shell.
-  function focusTerminal() {
-    if (!/^0x[0-9a-f]+$/.test(address)) return
-    Quickshell.execDetached(["sh", "-c",
-      'hyprctl dispatch "hl.dsp.focus({ window = \\"address:$1\\" })" >/dev/null 2>&1 || hyprctl dispatch focuswindow "address:$1"',
-      "sh", address])
+
+  Timer {
+    id: countdown
+    interval: 1000
+    repeat: true
+    running: root.shown && root.phase === "fingerprint" && root.remaining > 0
+    onTriggered: root.remaining = Math.max(0, root.remaining - 1)
   }
 
   Timer {
@@ -75,15 +79,17 @@ Item {
   ShellIpc {
     target: "sudo-prompt"
 
-    // begin(id, phase, command, address): a sudo started asking, or moved on
-    // from the fingerprint to the password. A newer sudo takes the window.
-    function begin(id: string, phase: string, command: string, address: string): string {
+    // begin(id, phase, command, timeout): a sudo started asking, or moved on
+    // from the fingerprint to the password. timeout: seconds pam_fprintd
+    // waits for a finger (0: no countdown). A newer sudo takes the window.
+    function begin(id: string, phase: string, command: string, timeout: string): string {
       if (phase !== "fingerprint" && phase !== "password") return "bad-phase"
       closeTimer.stop()
       root.requestId = root.clean(id, 32)
       root.phase = phase
       root.command = root.clean(command, 120)
-      root.address = root.clean(address, 32)
+      var t = parseInt(timeout, 10)
+      root.remaining = phase === "fingerprint" && t > 0 && t < 600 ? t : 0
       root.shown = true
       staleTimer.restart()
       return "ok"
@@ -109,8 +115,8 @@ Item {
     // The terminal keeps the keyboard: the password is typed there
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
-    // Only the card takes clicks; the rest of the screen stays usable
-    mask: Region { item: cardArea }
+    // Takes no clicks at all: everything under it stays usable
+    mask: Region {}
 
     Item {
       id: cardArea
@@ -198,7 +204,10 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             visible: root.phase === "fingerprint" || root.phase === "password"
-            text: root.phase === "fingerprint" ? "ou ton mot de passe dans le terminal · clic : y aller" : "clic : aller au terminal"
+            text: root.phase === "fingerprint"
+              ? (root.remaining > 0 ? "sinon, mot de passe dans le terminal dans " + root.remaining + " s"
+                                    : "le mot de passe va être demandé dans le terminal")
+              : "sudo le lit dans le terminal"
             color: root.foreground
             opacity: 0.5
             font.family: root.fontFamily
@@ -206,11 +215,6 @@ Item {
           }
         }
 
-        MouseArea {
-          anchors.fill: parent
-          cursorShape: Qt.PointingHandCursor
-          onClicked: root.focusTerminal()
-        }
       }
     }
   }

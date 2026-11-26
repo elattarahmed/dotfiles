@@ -83,20 +83,16 @@ fi
 # What sudo was asked to run, for the line above the window
 command=$(tr '\0' ' ' <"/proc/$sudo_pid/cmdline" 2>/dev/null | head -c 300)
 
-# The terminal window: the closest ancestor of sudo that owns a window (as in
-# sudo-auth-notify), so a click on the window can bring it forward
-address=''
-if [[ -n $sig ]] && clients=$(as_user hyprctl clients -j 2>/dev/null); then
-  pid=$sudo_pid
-  while ((pid > 1)); do
-    address=$(jq -r --argjson pid "$pid" '[.[] | select(.pid == $pid)] | sort_by(.focusHistoryID) | .[0].address // empty' <<<"$clients")
-    [[ -n $address ]] && break
-    pid=$(ps -o ppid= -p "$pid" | tr -d ' ')
-    [[ -n $pid ]] || break
-  done
+# How long pam_fprintd waits for a finger before sudo asks for the password
+# (its timeout= option, 30 s by default), for the window's countdown
+timeout=0
+if [[ $phase == fingerprint ]]; then
+  timeout=$(sed -nE 's/^[[:space:]]*auth[[:space:]].*pam_fprintd\.so.*[[:space:]]timeout=(-?[0-9]+).*/\1/p' /etc/pam.d/sudo | head -n 1)
+  timeout=${timeout:-30}
+  ((timeout > 0)) || timeout=0
 fi
 
-prompt begin "$sudo_pid" "$phase" "$command" "$address"
+prompt begin "$sudo_pid" "$phase" "$command" "$timeout"
 
 # One watcher per sudo: when it ends without having authenticated (wrong
 # password three times, Ctrl+C), the window says so and closes

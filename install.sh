@@ -66,7 +66,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile builtin-mic adaptive-refresh touchpad-reset zoom-guard screensaver idle plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout neovim rust asm apps ssh-server display guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

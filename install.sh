@@ -121,10 +121,12 @@ item_ids() {
   for item in "${ITEMS[@]}"; do echo "${item%%|*}"; done
 }
 
-is_item() { item_ids | grep -qxF -- "$1"; }
+# grep reads the whole list (no -q): with pipefail, grep -q quitting at the
+# first match could fail the pipe when the writer had not finished yet.
+is_item() { item_ids | grep -xF -- "$1" >/dev/null; }
 
-selected() { printf '%s\n' "${SELECTED[@]}" | grep -qxF -- "$1"; }
-explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -qxF -- "$1"; }
+selected() { printf '%s\n' "${SELECTED[@]}" | grep -xF -- "$1" >/dev/null; }
+explicit() { printf '%s\n' "${EXPLICIT[@]}" | grep -xF -- "$1" >/dev/null; }
 
 # module_handles MODULE ITEM: whether the module acts on that item, read from
 # its code: `selected ITEM`/`explicit ITEM`, a "ITEM|..." entry (Hyprland

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.privacy",
+  "name": "Privacy indicator",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "Orange dot while the microphone records, green while the camera is in use, like macOS",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Privacy indicator",
+    "description": "Orange dot while the microphone records, green while the camera is in use",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": { "interval": 2000 }
+  }
+}

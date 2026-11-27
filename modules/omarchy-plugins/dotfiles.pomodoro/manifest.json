@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.pomodoro",
+  "name": "Pomodoro",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "Pomodoro timer: 25 min work, 5 min break, a long break every 4",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Pomodoro",
+    "description": "Pomodoro timer: 25 min work, 5 min break, a long break every 4",
+    "category": "Utilities",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": { "work": 25, "shortBreak": 5, "longBreak": 15, "longEvery": 4 }
+  }
+}

@@ -47,6 +47,10 @@ ITEMS=(
   "airpods|on|Barre · AirPods (batterie · réduction de bruit · détection d'oreille) avec le démon airpods-tui"
   "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
+  "bar-drawer|on|Barre · Wi-Fi / Bluetooth / AirPods / VPN / IP / écran rangés dans le tiroir (survol de la flèche)"
+  "privacy-indicator|on|Barre · point orange quand le micro enregistre · vert quand la caméra est utilisée (comme macOS)"
+  "audio-visualizer|on|Barre · barres qui bougent avec la musique (cava) · seulement pendant la lecture"
+  "pomodoro|on|Barre · minuteur Pomodoro 25/5 min · clic démarrer/pause · clic droit arrêter"
   "interstellar-bar|on|Barre et notifications aux couleurs Interstellar · VPN / IP locale / IP publique · titre de la fenêtre"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "ligatures|on|AltGr+O → œ au lieu de ø · AltGr+A → æ (avec Maj : Œ Æ)"
@@ -70,7 +74,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle builtin-mic session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle builtin-mic session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display bar-drawer guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)

@@ -1,0 +1,26 @@
+#!/bin/bash
+# Prints one JSON line: {"mic": [apps recording], "cam": [apps using a camera]}.
+#
+# Microphone: PipeWire's capture streams (pactl source-outputs), leaving out
+# the monitors of the outputs (recording what plays, not the mic) and cava,
+# which listens to the music for the visualizer.
+# Camera: the uvcvideo driver counts its open devices; only then are the
+# processes holding /dev/video* looked up (the user's own; "?" for others).
+
+mic=$(pactl -f json list sources 2>/dev/null | jq -c '[.[] | select(.name | endswith(".monitor")) | .index]' 2>/dev/null)
+mic=$(pactl -f json list source-outputs 2>/dev/null | jq -c --argjson monitors "${mic:-[]}" '
+  [.[] | select(.source as $s | $monitors | index($s) | not)
+       | (.properties["application.name"] // .properties["application.process.binary"] // "?")
+       | select(test("^cava$"; "i") | not)] | unique' 2>/dev/null)
+
+cam='[]'
+if [[ $(cat /sys/module/uvcvideo/refcnt 2>/dev/null) -gt 0 ]]; then
+  pids=$(fuser /dev/video* 2>/dev/null)
+  if [[ -n ${pids// /} ]]; then
+    cam=$(for p in $pids; do cat "/proc/$p/comm" 2>/dev/null; done | jq -R -s -c 'split("\n") | map(select(length > 0)) | unique')
+  else
+    cam='["?"]'
+  fi
+fi
+
+printf '{"mic":%s,"cam":%s}\n' "${mic:-[]}" "${cam:-[]}"

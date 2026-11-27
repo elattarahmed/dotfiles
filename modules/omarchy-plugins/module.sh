@@ -1,5 +1,5 @@
 # Omarchy shell plugins and bar layout.
-# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout
+# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout, privacy-indicator, audio-visualizer, pomodoro
 
 # install_plugin ID [placement...]: copy the plugin, then enable it. A plugin
 # the shell keeps loaded (the clipboard picker) only picks up new code after
@@ -19,7 +19,7 @@ install_plugin() {
 
 module_omarchy_plugins() {
   local any=0 item
-  for item in clipboard emojis scale-button resize-mode sysstats bar-layout; do selected "$item" && any=1; done
+  for item in clipboard emojis scale-button resize-mode sysstats bar-layout privacy-indicator audio-visualizer pomodoro; do selected "$item" && any=1; done
   ((any)) && info "Barre et plugins Omarchy"
 
   # Each new widget goes first in the right section: the order ends up
@@ -28,6 +28,28 @@ module_omarchy_plugins() {
     install_plugin dotfiles.sysstats --section right --index 0
   else
     disable_plugin dotfiles.sysstats
+  fi
+
+  # Orange (microphone) / green (camera) dot, first on the right like macOS
+  if selected privacy-indicator; then
+    install_plugin dotfiles.privacy --section right --index 0
+  else
+    disable_plugin dotfiles.privacy
+  fi
+
+  # Bars moving with the music, next to the volume
+  if selected audio-visualizer; then
+    pkg_add cava
+    install_plugin dotfiles.visualizer --before omarchy.audio
+  else
+    disable_plugin dotfiles.visualizer
+  fi
+
+  # Pomodoro timer, next to the clock
+  if selected pomodoro; then
+    install_plugin dotfiles.pomodoro --section centerEnd --index 0
+  else
+    disable_plugin dotfiles.pomodoro
   fi
 
   if selected clipboard; then
@@ -68,7 +90,11 @@ module_omarchy_plugins() {
 
   if selected bar-layout && is_live; then
     omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
-    omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
+    # Only while the network icon is in the bar itself: with bar-drawer it is
+    # inside the tray's drawer, and the tray can't go after its own content
+    if jq -e 'any(.bar.layout.right[]?; .id == "omarchy.network")' "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1; then
+      omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
+    fi
     # interstellar-bar wants the bar opaque
     if selected interstellar-bar; then
       ok "disposition de la barre"

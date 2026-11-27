@@ -334,7 +334,11 @@ Les noms à utiliser pour parler de chaque élément, de gauche à droite (chacu
 | **Batterie** | à droite | celle d'Omarchy |
 | **Gestionnaire** (`control-center`) | juste après la batterie, icône de réglages (plus son coupé, Bluetooth, VPN, Wi-Fi coupé quand c'est le cas) | survol ou clic : tuiles Wi-Fi / Bluetooth / VPN / redimensionner, ce qui est **connecté**, son (sortie), micro (entrée), luminosité, échelle, réseaux et appareils |
 
-Les cartes (Tableau de bord, Gestionnaire, Musique) ont leur nom écrit en haut à gauche. Les boutons ont leur nom au survol, s'enfoncent au clic et se remplissent de couleur quand ils sont actifs.
+Les cartes (Tableau de bord, Gestionnaire, Musique) ont leur nom écrit en haut à gauche. Les boutons ont leur nom au survol, s'enfoncent au clic et se remplissent de couleur quand ils sont actifs. Sudo sans mot de passe affiche le temps qu'il lui reste (∞ s'il est permanent). La **veilleuse** rend l'écran plus chaud (moins de lumière bleue), pour le soir.
+
+Couper le **pavé tactile** depuis le tableau de bord demande une confirmation ; pour le réactiver : **Super + Ctrl + Alt + I** (ou une souris).
+
+Dans la partie droite, chaque groupe (applications · outils · musique · réseau · système · confidentialité) est **encadré**.
 
 ---
 

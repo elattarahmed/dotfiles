@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.bar-groups",
+  "name": "Bar groups",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "A light frame around each group of widgets of its section (groups end at the dotfiles' spacers)",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Bar groups",
+    "description": "Frames the groups of widgets of its section",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

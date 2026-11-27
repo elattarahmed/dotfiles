@@ -13,6 +13,7 @@ HYPR_FEATURES=(
   "touchscreen-off|touchscreen_off|Touchscreen turned off"
   "adaptive-refresh|adaptive_refresh|VRR on the built-in screen, SUPER + CTRL + ALT + H: live refresh rate"
   "touchpad-reset|touchpad_reset|SUPER + CTRL + ALT + P: reset a touchpad stuck with ghost fingers"
+  "discord-keys|discord_keys|SUPER + ALT + M / D / X: Discord mute, deafen, leave the voice channel"
   "dashboard|touchpad_on|SUPER + CTRL + ALT + I: turn the touchpad back on (the dashboard can turn it off)"
   "typing-guard|typing_guard|Cursor still and taps off while typing, until 0.8 s after the last key; modifiers end it"
   "caps-lock|caps_lock|Real Caps Lock, Compose on Right Ctrl"

@@ -72,6 +72,7 @@ ITEMS=(
   "builtin-mic|on|Framework 13 AMD · le vrai micro intégré par défaut (pas le micro fantôme · ni la prise jack vide · ni les AirPods) · enregistrement d'écran compris"
   "adaptive-refresh|off|Framework 13 AMD · Hz adaptatifs (VRR · 120 Hz quand ça bouge · ~40 Hz sinon) · Super+Ctrl+Alt+H affiche les Hz réels · paramètre noyau amdgpu (sudo + redémarrage)"
   "touchpad-reset|off|Pavé tactile · Super+Ctrl+Alt+P le réinitialise quand il croit qu'un doigt est resté posé · réinitialisé aussi après chaque veille (sudo)"
+  "discord-keys|on|Discord · raccourcis globaux : Super+Alt+M micro · Super+Alt+D sourdine · Super+Alt+X quitter le salon vocal"
   "typing-guard|off|Pavé tactile · pendant la frappe et 0,8 s après · le curseur ne bouge plus et un effleurement (tap) ne clique plus · le clic appuyé passe toujours (Ctrl+clic · Maj+clic)"
 )
 

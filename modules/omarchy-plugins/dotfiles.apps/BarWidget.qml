@@ -1,7 +1,6 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.SystemTray
-import Quickshell.Widgets
 import qs.Commons
 import qs.Ui
 
@@ -9,6 +8,12 @@ import qs.Ui
 // with no drawer to hover. Click: the app; middle click: its second action;
 // right click (or click when it only has a menu): its menu. Passive icons
 // (apps saying they have nothing to show) stay hidden, like in Omarchy's tray.
+// The icons are kept while their app is there (a ScriptModel, not a new array
+// each time an app changes its icon) and drawn by a plain Image, as Omarchy's
+// tray does. Suspected (not proven) of three Quickshell crashes: Discord in a
+// call, sharing its screen fullscreen, updates its icon every second, so an
+// asynchronous IconImage was destroyed and remade while the bar's window got
+// its scale, and Qt reloaded an image that was half-destroyed.
 BarWidget {
   id: root
   moduleName: "dotfiles.apps"
@@ -26,7 +31,7 @@ BarWidget {
     spacing: Style.space(8)
 
     Repeater {
-      model: root.items
+      model: ScriptModel { values: root.items }
 
       Item {
         id: app
@@ -35,11 +40,13 @@ BarWidget {
         height: root.iconSize
         anchors.verticalCenter: parent.verticalCenter
 
-        IconImage {
+        Image {
           anchors.fill: parent
+          fillMode: Image.PreserveAspectFit
+          // Decoded at physical pixels (sharp on a 1.6 scale)
+          sourceSize.width: Math.round(root.iconSize * Screen.devicePixelRatio)
+          sourceSize.height: Math.round(root.iconSize * Screen.devicePixelRatio)
           source: String(app.modelData.icon || "")
-          implicitSize: root.iconSize
-          asynchronous: true
         }
 
         MouseArea {

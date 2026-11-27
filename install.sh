@@ -48,6 +48,7 @@ ITEMS=(
   "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
   "control-center|on|Barre · Gestionnaire (Wi-Fi · Bluetooth · AirPods · VPN · luminosité · échelle · redimensionner) et groupe Applications toujours visible · remplace les icônes et le tiroir d'Omarchy"
+  "bar-groups|on|Barre · un cadre léger autour de chaque groupe d'icônes (avec control-center, qui range la barre par groupes)"
   "privacy-indicator|on|Barre · point orange quand le micro enregistre · vert quand la caméra est utilisée (comme macOS)"
   "audio-visualizer|on|Barre · barres qui bougent avec la musique (cava) · seulement pendant la lecture"
   "pomodoro|on|Barre · minuteur Pomodoro seul (sans dashboard) 25/5 min · clic démarrer/pause · clic droit arrêter"

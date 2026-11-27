@@ -338,7 +338,7 @@ Les cartes (Tableau de bord, Gestionnaire, Musique) ont leur nom écrit en haut 
 
 Couper le **pavé tactile** depuis le tableau de bord demande une confirmation ; pour le réactiver : **Super + Ctrl + Alt + I** (ou une souris).
 
-Dans la partie droite, chaque groupe (applications · outils · musique · réseau · système · confidentialité) est **encadré**.
+Dans la partie droite, chaque groupe (applications · outils · musique · réseau · système · confidentialité) est **encadré** (élément `bar-groups` ; pour l'enlever : `./install.sh --disable bar-groups`).
 
 ---
 

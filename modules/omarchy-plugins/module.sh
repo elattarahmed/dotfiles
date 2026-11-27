@@ -90,14 +90,15 @@ module_omarchy_plugins() {
   fi
 
   # Goes first too: whichport, scale, clipboard, sysstats
-  if selected scale-button; then
+  # In the Gestionnaire instead when control-center is on
+  if selected scale-button && ! selected control-center; then
     install_plugin dotfiles.display-scale --section right --index 0
   else
     disable_plugin dotfiles.display-scale
   fi
 
   # Goes first too: whichport, resize, scale, clipboard, sysstats
-  if selected resize-mode; then
+  if selected resize-mode && ! selected control-center; then
     install_plugin dotfiles.resize-mode --section right --index 0
   else
     disable_plugin dotfiles.resize-mode

@@ -318,7 +318,27 @@ Une notification « Session rouverte » s'affiche quand c'est fini.
 
 ---
 
-## 9. Le reste
+## 9. La barre : qui est qui
+
+Les noms à utiliser pour parler de chaque élément, de gauche à droite (chacun est un élément de `./install.sh`, entre parenthèses).
+
+| Nom | Où | Ce que c'est |
+|---|---|---|
+| **Tableau de bord** (`dashboard`) | au centre : la date et l'heure | survol ou clic : raccourcis (ne pas déranger, veilleuse, rester éveillé, sudo sans mot de passe, enregistrement, rappels), onglet **Aperçu** (horloge, calendrier, météo, fuseaux, pomodoro) et onglet **Performances** (processeur, mémoire, température, batterie, disque, réseau). Clic droit : démarrer / mettre en pause le pomodoro |
+| **Indicateur de confidentialité** (`privacy-indicator`) | début de la partie droite, seulement quand il sert | point orange : une appli enregistre le micro ; vert : la caméra |
+| **Presse-papiers** (`clipboard`) | à droite | l'historique (Alt+Maj+V) |
+| **IP** (`interstellar-bar`) | à droite | l'IP publique ; au survol, le pays et l'IP locale ; clic / clic droit : copier |
+| **Stats** (`sysstats`) | à droite | RAM, CPU ou température (clic pour changer) |
+| **Applications** (`control-center`) | à droite, groupe d'icônes | les applis ouvertes (Discord, VLC…) ; clic : l'appli, clic droit : son menu. Juste après : les **agents** (Claude) |
+| **Visualiseur** (`audio-visualizer`) | à droite, barres qui bougent | survol ou clic : la carte de lecture (pochette, ⏮ ⏯ ⏭, choix du lecteur) |
+| **Gestionnaire** (`control-center`) | à droite, icônes Wi-Fi / Bluetooth / VPN | survol ou clic : Wi-Fi, Bluetooth, AirPods, VPN, luminosité, échelle, redimensionner |
+| **Son** et **batterie** | tout à droite | ceux d'Omarchy |
+
+Les cartes du Tableau de bord et du Gestionnaire ont leur nom écrit en haut à gauche.
+
+---
+
+## 10. Le reste
 
 - Thème complet du bureau (terminal, barre, verrouillage, fond…) : `Super+Ctrl+T`, ou menu **Appearance → Theme**.
 - Tous les raccourcis clavier : `Super+K`.

@@ -8,12 +8,16 @@ THEME_REPOS=(
   https://github.com/ankur311sudo/black_arch.git
   https://github.com/archer-clawbot/omarchy-hermarchy-theme.git
 )
-THEME_NAME="black_arch"
-THEME_BACKGROUND="14-dot-hands.jpg"
+# The theme in use: HyDE's Obsidian Purple, converted by hyde-theme (its own
+# wallpapers, so no extra one is forced: THEME_BACKGROUND is only for themes
+# that get one from backgrounds/<theme>/)
+THEME_NAME="hyde-obsidian-purple"
+THEME_HYDE="Obsidian Purple"
+THEME_BACKGROUND=""
 
 # HyDE gallery themes installed with hyde-themes (names as in `hyde-theme list`).
 # Each is downloaded and converted on install; its wallpapers stay out of the repo.
-HYDE_THEMES=()
+HYDE_THEMES=("Obsidian Purple")
 
 module_theme() {
   if selected hyde-themes; then
@@ -51,6 +55,10 @@ module_theme() {
   done
 
   is_live || return 0
+  # A HyDE theme in use is converted first, even without the hyde-themes item
+  if [[ -n ${THEME_HYDE:-} && ! -d $themes/$THEME_NAME ]]; then
+    "$DOTFILES_DIR/modules/theme/hyde-theme" install --missing "$THEME_HYDE" || warn "impossible d'installer le thème HyDE $THEME_HYDE"
+  fi
   if [[ $(cat "$HOME/.local/state/omarchy/current/theme.name" 2>/dev/null) == "$THEME_NAME" ]]; then
     ok "thème $THEME_NAME déjà actif"
   elif omarchy theme set "$THEME_NAME" >/dev/null 2>&1; then
@@ -60,6 +68,7 @@ module_theme() {
     return 0
   fi
 
+  [[ -n $THEME_BACKGROUND ]] || return 0
   local background="$HOME/.local/state/omarchy/current/theme/backgrounds/$THEME_BACKGROUND"
   if [[ -f $background && $(readlink -f "$HOME/.local/state/omarchy/current/background") != "$(readlink -f "$background")" ]]; then
     omarchy theme bg set "$background" >/dev/null 2>&1 && ok "fond d'écran $THEME_BACKGROUND"

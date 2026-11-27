@@ -10,7 +10,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
   "hyde-themes|on|Thèmes de la galerie HyDE convertis pour Omarchy (commande hyde-theme)"
-  "theme|on|Thème Black_arch (et Hermarchy installé) avec un fond d'écran en plus"
+  "theme|on|Thème HyDE Obsidian Purple (Black_arch et Hermarchy installés aussi, à choisir dans le menu)"
   "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
@@ -275,6 +275,11 @@ fi
 for module in "${RUN_MODULES[@]}"; do
   "module_${module//-/_}"
 done
+
+# One restart of the shell for every plugin whose code changed (install_plugin)
+if ((${RESTART_SHELL:-0})) && is_live; then
+  omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré (une fois, pour les plugins mis à jour)" || true
+fi
 
 mkdir -p "$(dirname "$SELECTION_FILE")"
 [[ -n $link_choice ]] && echo "$link_choice" >"$MODE_FILE"

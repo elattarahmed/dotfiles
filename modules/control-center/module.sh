@@ -10,7 +10,7 @@
 # (AirPods, interstellar-bar), so a new machine ends up the same.
 # Item: control-center
 
-CC_REPLACED='["omarchy.network", "omarchy.bluetooth", "omarchy.monitor", "interstellar-vpn", "dotfiles.display-scale", "dotfiles.resize-mode", "omarchy.tray"]'
+CC_REPLACED='["omarchy.network", "omarchy.bluetooth", "omarchy.monitor", "interstellar-vpn", "dotfiles.display-scale", "dotfiles.resize-mode", "omarchy.tray", "omarchy.audio"]'
 CC_AIRPODS=io.github.sotoaugusto.airpods
 
 cc_in_layout() {
@@ -25,24 +25,18 @@ module_control_center() {
   local shell_json=$HOME/.config/omarchy/shell.json tmp id
   if selected control-center; then
     info "Gestionnaire et Applications"
-    install_plugin dotfiles.control-center --before omarchy.audio
+    install_plugin dotfiles.control-center --before omarchy.power
     install_plugin dotfiles.apps --before omarchy.agents
     is_live && [[ -f $shell_json ]] || return 0
+    # One write (each change of shell.json rebuilds the bar): the icons the
+    # Gestionnaire replaces go, then the right side is ordered by role (bar-order.jq)
     tmp=$(mktemp)
-    jq --argjson gone "$CC_REPLACED" '.bar.layout |= map_values(map(select(.id as $id | $gone | index($id) | not)))' "$shell_json" >"$tmp"
-    if ! cmp -s "$tmp" "$shell_json"; then
-      backup "$shell_json"
-      cat "$tmp" >"$shell_json"
-      ok "icônes de connexion et tiroir retirés de la barre (dans le Gestionnaire)"
-    fi
-    rm -f "$tmp"
-    # The right side ordered by role, groups apart (bar-order.jq)
-    tmp=$(mktemp)
-    jq -f "$DOTFILES_DIR/modules/control-center/bar-order.jq" "$shell_json" >"$tmp"
+    jq --argjson gone "$CC_REPLACED" '.bar.layout |= map_values(map(select(.id as $id | $gone | index($id) | not)))' "$shell_json" \
+      | jq -f "$DOTFILES_DIR/modules/control-center/bar-order.jq" >"$tmp"
     if [[ -s $tmp ]] && ! cmp -s "$tmp" "$shell_json"; then
       backup "$shell_json"
       cat "$tmp" >"$shell_json"
-      ok "barre rangée par groupes : applications · outils · musique · réseau · système · confidentialité"
+      ok "barre rangée par groupes : applications · outils · musique · réseau · système et Gestionnaire · confidentialité (connexions, volume et tiroir dans le Gestionnaire)"
     fi
     rm -f "$tmp"
     # Keep the AirPods plugin (its state feeds the card), out of sight
@@ -54,6 +48,7 @@ module_control_center() {
     info "Gestionnaire et Applications"
     disable_plugin dotfiles.control-center
     disable_plugin dotfiles.apps
+    cc_in_layout omarchy.audio || omarchy bar put omarchy.audio --before omarchy.power >/dev/null 2>&1 || true
     for id in omarchy.tray omarchy.network omarchy.bluetooth omarchy.monitor; do
       cc_in_layout "$id" || omarchy bar put "$id" --before omarchy.audio >/dev/null 2>&1 || true
     done

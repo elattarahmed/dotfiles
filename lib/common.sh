@@ -174,6 +174,13 @@ enable_plugin() {
   is_live || return 0
   command -v omarchy-shell >/dev/null || return 0
 
+  # Already enabled: nothing to do. A rescan rebuilds the bar, and the shell
+  # reloads a plugin whose files changed on its own, so rescanning for every
+  # widget made the bar reload once per widget on each ./install.sh.
+  if omarchy plugin list --json 2>/dev/null | jq -e --arg id "$id" 'any(.[]; .id == $id and .enabled)' >/dev/null; then
+    return 0
+  fi
+
   omarchy-shell shell rescanPlugins >/dev/null 2>&1 || true
   local attempt
   for ((attempt = 0; attempt < 60; attempt++)); do

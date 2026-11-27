@@ -189,6 +189,8 @@ BarWidget {
   readonly property bool stayAwake: idleService ? idleService.stayAwake === true : false
   readonly property bool remote: remoteService ? remoteService.active === true : false
   property bool sudoOpen: false
+  property bool animations: true
+  property bool touchpad: true
   property bool recording: false
   property int reminders: 0
 
@@ -201,7 +203,24 @@ BarWidget {
     command: ["omarchy-reminder", "show", "--json"]
     stdout: StdioCollector { onStreamFinished: { try { root.reminders = Number(JSON.parse(text).count || 0) } catch (e) { root.reminders = 0 } } }
   }
+  Process {
+    id: modesProc
+    command: ["sh", "-c", "hyprctl getoption animations:enabled -j | jq -r .bool; [ -e \"$HOME/.local/state/omarchy/toggles/hypr/touchpad-disabled-name\" ] && echo off || echo on"]
+    stdout: StdioCollector {
+      onStreamFinished: { var l = text.trim().split("\n"); root.animations = l[0] !== "false"; root.touchpad = l[1] !== "off" }
+    }
+  }
+  // Runs a shortcut; a capture (closeFirst) waits for the card to be gone
+  // so it isn't in the picture
+  property var pendingArgv: null
+  Timer { id: laterTimer; interval: 350; onTriggered: { if (root.pendingArgv) Quickshell.execDetached(root.pendingArgv); root.pendingArgv = null; root.refreshToggles() } }
+  function later(argv, closeFirst) {
+    if (closeFirst) { close(); pendingArgv = argv; laterTimer.restart() }
+    else { Quickshell.execDetached(argv); refreshSoon.restart() }
+  }
+  Timer { id: refreshSoon; interval: 400; onTriggered: root.refreshToggles() }
   function refreshToggles() {
+    if (!modesProc.running) modesProc.running = true
     if (!sudoProc.running) sudoProc.running = true
     if (!recProc.running) recProc.running = true
     if (!remindProc.running) remindProc.running = true
@@ -209,7 +228,7 @@ BarWidget {
   // Light polling so the bar shows a recording or open sudo even when closed
   Timer { interval: root.dashOpen ? 2000 : 10000; repeat: true; running: true; triggeredOnStart: true; onTriggered: root.refreshToggles() }
   readonly property string activeMarks:
-      (recording ? " \u{f0ec2}" : "") + (sudoOpen ? " \u{f07f5}" : "") + (stayAwake ? " \u{f0176}" : "")
+      (recording ? " \u{f0ec2}" : "") + (sudoOpen ? " \u{f0bc4}" : "") + (stayAwake ? " \u{f0176}" : "")
     + (dnd ? " \u{f009b}" : "") + (nightlight ? " \u{f050e}" : "") + (remote ? " \u{f08b9}" : "")
 
   // ---- Bar label ------------------------------------------------------------
@@ -290,6 +309,21 @@ BarWidget {
     property bool danger: false
     readonly property color tint: danger ? Commons.Color.urgent : Commons.Color.accent
     signal activated()
+    scale: iaMouse.pressed ? 0.88 : 1
+    Behavior on scale { NumberAnimation { duration: Style.duration(90); easing.type: Easing.OutCubic } }
+    onActivated: iaFlash.restart()
+    Rectangle {
+      id: iaGlow
+      anchors.fill: parent
+      radius: parent.radius
+      color: Commons.Color.accent
+      opacity: 0
+    }
+    SequentialAnimation {
+      id: iaFlash
+      NumberAnimation { target: iaGlow; property: "opacity"; to: 0.55; duration: Style.duration(60) }
+      NumberAnimation { target: iaGlow; property: "opacity"; to: 0; duration: Style.duration(260); easing.type: Easing.OutCubic }
+    }
     width: Style.space(34)
     height: Style.space(34)
     radius: Style.cornerRadius
@@ -304,6 +338,50 @@ BarWidget {
       font.pixelSize: Style.font.body * 1.25
     }
     ToolTipArea { id: iaMouse; anchors.fill: parent; text: ia.title; onClicked: ia.activated() }
+  }
+
+  component Caption: Text {
+    textFormat: Text.PlainText
+    color: Commons.Color.foreground
+    opacity: 0.55
+    font.family: Style.font.family
+    font.pixelSize: Style.font.caption
+    font.bold: true
+  }
+
+  // A square shortcut: filled while on (red for sudo / recording), its
+  // title on hover, sinks while pressed and flashes when it acts
+  component ShortcutTile: Rectangle {
+    id: st
+    property string icon: ""
+    property string title: ""
+    property bool on: false
+    property bool danger: false
+    readonly property color tint: danger ? Commons.Color.urgent : Commons.Color.accent
+    signal activated()
+    width: Style.space(56)
+    height: Style.space(56)
+    radius: Style.cornerRadius + Style.space(4)
+    color: on ? tint : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, stMouse.containsMouse ? 0.14 : 0.08)
+    Behavior on color { ColorAnimation { duration: Style.duration(150) } }
+    scale: stMouse.pressed ? 0.9 : 1
+    Behavior on scale { NumberAnimation { duration: Style.duration(90); easing.type: Easing.OutCubic } }
+    onActivated: stFlash.restart()
+    Rectangle { id: stGlow; anchors.fill: parent; radius: parent.radius; color: Commons.Color.foreground; opacity: 0 }
+    SequentialAnimation {
+      id: stFlash
+      NumberAnimation { target: stGlow; property: "opacity"; to: 0.35; duration: Style.duration(60) }
+      NumberAnimation { target: stGlow; property: "opacity"; to: 0; duration: Style.duration(280); easing.type: Easing.OutCubic }
+    }
+    Text {
+      anchors.centerIn: parent
+      textFormat: Text.PlainText
+      text: st.icon
+      color: st.on ? Commons.Color.background : Commons.Color.foreground
+      font.family: Style.font.family
+      font.pixelSize: Style.font.iconLarge * 1.2
+    }
+    ToolTipArea { id: stMouse; anchors.fill: parent; text: st.title; onClicked: st.activated() }
   }
 
   component Tile: Rectangle {
@@ -408,49 +486,14 @@ BarWidget {
           onClicked: root.tab = "overview"
         }
         Button {
+          text: "\u{f140b}  Raccourcis"; foreground: root.fg; selected: root.tab === "shortcuts"
+          onClicked: { root.tab = "shortcuts"; root.refreshToggles() }
+        }
+        Button {
           text: "\u{f04c5}  Performances"; foreground: root.fg; selected: root.tab === "perf"
           onClicked: { root.tab = "perf"; if (!perfProc.running) perfProc.running = true }
         }
       }
-      }
-
-      // Quick toggles: icons only, their title on hover
-      Row {
-        spacing: Style.space(8)
-        IconAction {
-          icon: "\u{f009b}"; on: root.dnd
-          title: root.dnd ? "Ne pas déranger : activé" : "Ne pas déranger"
-          onActivated: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
-        }
-        IconAction {
-          icon: "\u{f050e}"; on: root.nightlight
-          title: root.nightlight ? "Veilleuse : activée" : "Veilleuse"
-          onActivated: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
-        }
-        IconAction {
-          icon: "\u{f0176}"; on: root.stayAwake
-          title: root.stayAwake ? "Reste éveillé : activé" : "Rester éveillé"
-          onActivated: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
-        }
-        IconAction {
-          icon: "\u{f07f5}"; on: root.sudoOpen; danger: true
-          title: root.sudoOpen ? "Sudo sans mot de passe : actif (clic pour couper)" : "Sudo sans mot de passe (ouvre un terminal)"
-          onActivated: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
-        }
-        IconAction {
-          icon: "\u{f0ec2}"; on: root.recording; danger: true
-          title: root.recording ? "Arrêter l'enregistrement" : "Enregistrer l'écran"
-          onActivated: { root.run(root.recording ? "omarchy-capture-screenrecording --stop-recording" : "omarchy-menu toggle trigger.capture.screenrecord"); root.close() }
-        }
-        IconAction {
-          icon: "\u{f088c}"; on: root.reminders > 0
-          title: root.reminders > 0 ? "Rappels (" + root.reminders + ")" : "Nouveau rappel"
-          onActivated: { Quickshell.execDetached(root.reminders > 0 ? ["omarchy-reminder", "show"] : ["omarchy-reminder", "-i"]); root.close() }
-        }
-        IconAction {
-          visible: root.remote
-          icon: "\u{f08b9}"; on: true; danger: true; title: "Session à distance en cours"
-        }
       }
 
       // ===== Aperçu =====
@@ -668,6 +711,108 @@ BarWidget {
             }
             IconAction { visible: root.phase !== "idle"; icon: "\u{f04ad}"; title: root.phase === "work" ? "Passer à la pause" : "Terminer la pause"; onActivated: root.skipPhase() }
             IconAction { visible: root.phase !== "idle"; icon: "\u{f04db}"; title: "Arrêter"; onActivated: root.stopPomodoro() }
+          }
+        }
+      }
+
+      // ===== Raccourcis =====
+      Column {
+        visible: root.tab === "shortcuts"
+        width: parent.width
+        spacing: Style.space(10)
+
+        Caption { text: "MODES" }
+        Flow {
+          width: parent.width
+          spacing: Style.space(10)
+          ShortcutTile {
+            icon: "\u{f009b}"; on: root.dnd
+            title: root.dnd ? "Ne pas déranger : activé" : "Ne pas déranger"
+            onActivated: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
+          }
+          ShortcutTile {
+            icon: "\u{f050e}"; on: root.nightlight
+            title: root.nightlight ? "Veilleuse : activée" : "Veilleuse"
+            onActivated: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
+          }
+          ShortcutTile {
+            icon: "\u{f0176}"; on: root.stayAwake
+            title: root.stayAwake ? "Reste éveillé : activé" : "Rester éveillé"
+            onActivated: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
+          }
+          ShortcutTile {
+            icon: "\u{f0bc4}"; on: root.sudoOpen; danger: true
+            title: root.sudoOpen ? "Sudo sans mot de passe : actif (clic pour couper)" : "Sudo sans mot de passe (ouvre un terminal)"
+            onActivated: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
+          }
+          ShortcutTile {
+            icon: "\u{f093a}"; on: root.animations
+            title: root.animations ? "Animations : activées" : "Animations : coupées"
+            onActivated: root.later(["omarchy", "toggle", "animations"], false)
+          }
+          ShortcutTile {
+            icon: "\u{f0570}"
+            title: "Espaces entre les fenêtres"
+            onActivated: root.later(["omarchy", "hyprland", "window", "gaps", "toggle"], false)
+          }
+          ShortcutTile {
+            icon: root.touchpad ? "\u{f07f8}" : "\u{f0933}"; on: root.touchpad
+            title: root.touchpad ? "Pavé tactile : activé" : "Pavé tactile : coupé"
+            onActivated: root.later(["omarchy", "toggle", "touchpad"], false)
+          }
+        }
+
+        Caption { text: "CAPTURE" }
+        Flow {
+          width: parent.width
+          spacing: Style.space(10)
+          ShortcutTile {
+            icon: "\u{f0100}"; title: "Capture d'écran"
+            onActivated: root.later(["omarchy", "capture", "screenshot"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f0ec2}"; on: root.recording; danger: true
+            title: root.recording ? "Arrêter l'enregistrement" : "Enregistrer l'écran"
+            onActivated: root.later(root.recording ? ["omarchy-capture-screenrecording", "--stop-recording"] : ["omarchy-menu", "toggle", "trigger.capture.screenrecord"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f113a}"; title: "Copier du texte de l'écran (OCR)"
+            onActivated: root.later(["omarchy", "capture", "text"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f0432}"; title: "Lire un QR code à l'écran"
+            onActivated: root.later(["omarchy", "capture", "qr"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f020a}"; title: "Pipette : copier une couleur"
+            onActivated: root.later(["hyprpicker", "-a"], true)
+          }
+        }
+
+        Caption { text: "SYSTÈME" }
+        Flow {
+          width: parent.width
+          spacing: Style.space(10)
+          ShortcutTile {
+            icon: "\u{f0020}"; on: root.reminders > 0
+            title: root.reminders > 0 ? "Rappels (" + root.reminders + ")" : "Nouveau rappel"
+            onActivated: root.later(root.reminders > 0 ? ["omarchy-reminder", "show"] : ["omarchy-reminder", "-i"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f0e09}"; title: "Fond d'écran suivant"
+            onActivated: root.later(["omarchy", "theme", "bg", "next"], false)
+          }
+          ShortcutTile {
+            icon: "\u{f0ddc}"; title: "Économiseur d'écran"
+            onActivated: root.later(["omarchy", "launch", "screensaver"], true)
+          }
+          ShortcutTile {
+            icon: "\u{f033e}"; title: "Verrouiller"
+            onActivated: root.later(["omarchy", "system", "lock"], true)
+          }
+          ShortcutTile {
+            visible: root.remote
+            icon: "\u{f08b9}"; on: true; danger: true; title: "Session à distance en cours"
           }
         }
       }

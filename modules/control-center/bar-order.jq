@@ -6,8 +6,8 @@ def groups: [
   ["dotfiles.apps", "omarchy.agents"],
   ["dotfiles.clipboard-button", "elattarahmed.whichport"],
   ["dotfiles.visualizer", "omarchy.audio"],
-  ["interstellar-ip", "dotfiles.control-center"],
-  ["dotfiles.sysstats", "omarchy.power"],
+  ["interstellar-ip"],
+  ["dotfiles.sysstats", "omarchy.power", "dotfiles.control-center"],
   ["dotfiles.privacy"]
 ];
 def spacer: {"id": "omarchy.spacer", "size": 14, "dotfilesSpacer": true};

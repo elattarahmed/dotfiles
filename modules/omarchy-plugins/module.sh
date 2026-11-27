@@ -12,9 +12,10 @@ install_plugin() {
   [[ -d $dest ]] && ! diff -rq "$src" "$dest" >/dev/null 2>&1 && changed=1
   install_dir "$src" "$dest"
   enable_plugin "$id" "$@"
-  if ((changed)) && grep -q '"keepLoaded": true' "$src/manifest.json"; then
-    RESTART_SHELL=1
-  fi
+  # The shell's own reload of a changed plugin can keep the old code (QML
+  # cache): install.sh restarts it once, at the very end, when a plugin changed
+  ((changed)) && RESTART_SHELL=1
+  return 0
 }
 
 module_omarchy_plugins() {
@@ -113,22 +114,24 @@ module_omarchy_plugins() {
   fi
 
   if selected bar-layout && is_live; then
-    omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
+    # Each write of shell.json rebuilds the bar: move only what isn't in place
+    local layout_before
+    layout_before=$(jq -c '.bar' "$HOME/.config/omarchy/shell.json" 2>/dev/null)
+    if jq -e '[.bar.layout[][]?.id] | (index("omarchy.keyboard-layout") != null) and (index("omarchy.clock") != null) and (index("omarchy.keyboard-layout") + 1 != index("omarchy.clock"))' "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1; then
+      omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
+    fi
     # Only while the network icon is in the bar itself: with bar-drawer it is
     # inside the tray's drawer, and the tray can't go after its own content
     if jq -e 'any(.bar.layout.right[]?; .id == "omarchy.network")' "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1; then
       omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
     fi
     # interstellar-bar wants the bar opaque
-    if selected interstellar-bar; then
-      ok "disposition de la barre"
-    else
+    if ! selected interstellar-bar && [[ $(jq -r '.bar.background // ""' "$HOME/.config/omarchy/shell.json" 2>/dev/null) != none ]]; then
       omarchy bar transparent true >/dev/null 2>&1 || true
-      ok "disposition de la barre (transparente)"
+    fi
+    if [[ $(jq -c '.bar' "$HOME/.config/omarchy/shell.json" 2>/dev/null) != "$layout_before" ]]; then
+      ok "disposition de la barre"
     fi
   fi
 
-  if ((${RESTART_SHELL:-0})) && is_live; then
-    omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré" || true
-  fi
 }

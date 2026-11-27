@@ -135,6 +135,9 @@ BarWidget {
   readonly property var sink: Pipewire.defaultAudioSink
   PwObjectTracker { objects: root.sink ? [root.sink] : [] }
   readonly property var sinks: Pipewire.nodes ? Pipewire.nodes.values.filter(function(n) { return n && n.audio && n.isSink && !n.isStream }) : []
+  readonly property var source: Pipewire.defaultAudioSource
+  PwObjectTracker { objects: root.source ? [root.source] : [] }
+  readonly property var sources: Pipewire.nodes ? Pipewire.nodes.values.filter(function(n) { return n && n.audio && !n.isSink && !n.isStream && !/\.monitor$/.test(String(n.name || "")) }) : []
   function sinkName(n) { return plain(n.description || n.nickname || n.name, 40) }
 
   // ---- VPN, brightness, scale -------------------------------------------------------
@@ -174,9 +177,13 @@ BarWidget {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: (root.wifiOn ? (root.connectedNetwork ? root.wifiIcon(root.connectedNetwork.signalStrength) : "\u{f05a9}") : "\u{f05aa}")
+    // Its own icon (the network is shown by the IP next to it); what is
+    // worth seeing at a glance is added: sound off, Bluetooth device, VPN, Wi-Fi off
+    text: "\u{f062e}"
+      + (root.sink && root.sink.audio && root.sink.audio.muted ? "  \u{f075f}" : "")
       + (root.btConnected.length ? "  \u{f00b1}" : "")
       + (root.vpnIface ? "  \u{f099d}" : "")
+      + (root.wifiOn ? "" : "  \u{f05aa}")
     onPressed: function(b) { root.pinned = !root.pinned; root.hoverOpen = root.pinned }
   }
   Timer { id: openDelay; interval: 500; onTriggered: if (button.tooltipHovered) root.hoverOpen = true }
@@ -218,6 +225,8 @@ BarWidget {
     signal activated()
     width: Style.space(56)
     height: Style.space(56)
+    scale: tileMouse.pressed && clickable ? 0.9 : 1
+    Behavior on scale { NumberAnimation { duration: Style.duration(90); easing.type: Easing.OutCubic } }
     radius: Style.cornerRadius + Style.space(4)
     color: on ? Commons.Color.accent : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, tileMouse.containsMouse && clickable ? 0.14 : 0.08)
     Behavior on color { ColorAnimation { duration: Style.duration(150) } }
@@ -268,6 +277,8 @@ BarWidget {
     property string title: ""
     property bool on: false
     signal activated()
+    scale: iaMouse.pressed ? 0.88 : 1
+    Behavior on scale { NumberAnimation { duration: Style.duration(90); easing.type: Easing.OutCubic } }
     width: Style.space(32)
     height: Style.space(32)
     radius: Style.cornerRadius
@@ -369,7 +380,7 @@ BarWidget {
             clickable: false
           }
           Tile {
-            icon: "\u{f0a6a}"
+            icon: "\u{f0655}"
             title: "Redimensionner la fenêtre active (Super+R)"
             onActivated: { root.close(); Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.submap("resize")']) }
           }
@@ -418,7 +429,7 @@ BarWidget {
               IconAction {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                icon: "\u{f0156}"; title: "Déconnecter"
+                icon: "\u{f0338}"; title: "Déconnecter"
                 onActivated: root.btAction(devCard.modelData)
               }
             }
@@ -427,7 +438,7 @@ BarWidget {
               visible: root.isAirpods(devCard.modelData)
               spacing: Style.space(6)
               Repeater {
-                model: [["anc", "\u{f04c3}", "Réduction de bruit"], ["transparency", "\u{f05cb}", "Transparence"], ["adaptive", "\u{f04e6}", "Adaptatif"], ["off", "\u{f073a}", "Désactivé"]]
+                model: [["anc", "\u{f0a45}", "Réduction de bruit"], ["transparency", "\u{f07c5}", "Transparence"], ["adaptive", "\u{f18f2}", "Adaptatif"], ["off", "\u{f073a}", "Désactivé"]]
                 IconAction {
                   required property var modelData
                   icon: modelData[1]; title: modelData[2]
@@ -478,6 +489,43 @@ BarWidget {
               color: current ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.06)
               Text { id: sinkText; anchors.centerIn: parent; textFormat: Text.PlainText; text: root.sinkName(modelData); color: root.fg; font.family: root.font; font.pixelSize: Style.font.caption }
               MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Pipewire.preferredDefaultAudioSink = modelData }
+            }
+          }
+        }
+        Row {
+          width: parent.width
+          spacing: Style.space(8)
+          visible: !!root.source
+          IconAction {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: root.source && root.source.audio && root.source.audio.muted ? "\u{f036d}" : "\u{f036c}"
+            title: root.source && root.source.audio && root.source.audio.muted ? "Réactiver le micro" : "Couper le micro"
+            on: !!(root.source && root.source.audio && root.source.audio.muted)
+            onActivated: if (root.source && root.source.audio) root.source.audio.muted = !root.source.audio.muted
+          }
+          PanelSlider {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - Style.space(40)
+            bar: root.bar
+            value: root.source && root.source.audio ? Math.min(1, root.source.audio.volume) : 0
+            onMoved: function(v) { if (root.source && root.source.audio) root.source.audio.volume = v }
+          }
+        }
+        Flow {
+          width: parent.width
+          spacing: Style.space(6)
+          visible: root.sources.length > 1
+          Repeater {
+            model: root.sources
+            Rectangle {
+              required property var modelData
+              readonly property bool current: root.source === modelData
+              width: srcText.implicitWidth + Style.space(16)
+              height: Style.space(26)
+              radius: height / 2
+              color: current ? Qt.rgba(Commons.Color.accent.r, Commons.Color.accent.g, Commons.Color.accent.b, 0.3) : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.06)
+              Text { id: srcText; anchors.centerIn: parent; textFormat: Text.PlainText; text: "\u{f036c} " + root.sinkName(modelData); color: root.fg; font.family: root.font; font.pixelSize: Style.font.caption }
+              MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Pipewire.preferredDefaultAudioSource = modelData }
             }
           }
         }

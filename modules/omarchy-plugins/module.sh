@@ -1,5 +1,5 @@
 # Omarchy shell plugins and bar layout.
-# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout, privacy-indicator, audio-visualizer, pomodoro
+# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout, privacy-indicator, audio-visualizer, pomodoro, dashboard
 
 # install_plugin ID [placement...]: copy the plugin, then enable it. A plugin
 # the shell keeps loaded (the clipboard picker) only picks up new code after
@@ -19,7 +19,7 @@ install_plugin() {
 
 module_omarchy_plugins() {
   local any=0 item
-  for item in clipboard emojis scale-button resize-mode sysstats bar-layout privacy-indicator audio-visualizer pomodoro; do selected "$item" && any=1; done
+  for item in clipboard emojis scale-button resize-mode sysstats bar-layout privacy-indicator audio-visualizer pomodoro dashboard; do selected "$item" && any=1; done
   ((any)) && info "Barre et plugins Omarchy"
 
   # Each new widget goes first in the right section: the order ends up
@@ -45,8 +45,31 @@ module_omarchy_plugins() {
     disable_plugin dotfiles.visualizer
   fi
 
-  # Pomodoro timer, next to the clock
-  if selected pomodoro; then
+  # The clock with its dashboard (calendar, weather, world clocks, pomodoro,
+  # performances) takes the clock's place; what it holds leaves the bar
+  if selected dashboard; then
+    install_plugin dotfiles.dashboard --before omarchy.clock
+    if is_live && [[ -f $HOME/.config/omarchy/shell.json ]]; then
+      local shell_json=$HOME/.config/omarchy/shell.json tmp
+      tmp=$(mktemp)
+      jq '.bar.layout |= map_values(map(select(.id as $id | ["omarchy.clock", "omarchy.weather", "omarchy.elsewhen", "dotfiles.pomodoro"] | index($id) | not)))' \
+        "$shell_json" >"$tmp"
+      if ! cmp -s "$tmp" "$shell_json"; then
+        backup "$shell_json"
+        cat "$tmp" >"$shell_json"
+        ok "horloge, météo, fuseaux et pomodoro rangés dans le tableau de bord"
+      fi
+      rm -f "$tmp"
+    fi
+  else
+    if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "dotfiles.dashboard" and .enabled)' >/dev/null; then
+      omarchy bar put omarchy.clock --section center >/dev/null 2>&1 || true
+    fi
+    disable_plugin dotfiles.dashboard
+  fi
+
+  # Pomodoro timer next to the clock, unless the dashboard already has it
+  if selected pomodoro && ! selected dashboard; then
     install_plugin dotfiles.pomodoro --section centerEnd --index 0
   else
     disable_plugin dotfiles.pomodoro

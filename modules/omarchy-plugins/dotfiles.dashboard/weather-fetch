@@ -1,0 +1,28 @@
+#!/bin/bash
+# The dashboard's weather, from wttr.in in French, as one small JSON line:
+# place, now (°C, feels like, description, code, humidity, wind) and three
+# days (date, min, max, midday code). Uses the location stored for Omarchy's
+# weather widget (omarchy-weather-location), else wttr.in's IP guess.
+query=""
+if [[ -s $HOME/.local/state/omarchy/settings/weather.json ]] && command -v omarchy-weather-location >/dev/null; then
+  location=$(omarchy-weather-location 2>/dev/null)
+  [[ -n $location ]] && query=$(jq -rn --arg l "$location" '$l | @uri')
+fi
+
+curl -fsS --max-time 8 "https://wttr.in/${query}?format=j1&lang=fr" 2>/dev/null | jq -c '
+  def s(n): tostring | .[0:n];
+  {
+    place: ((.nearest_area[0].areaName[0].value // "") | s(40)),
+    temp: (.current_condition[0].temp_C | tonumber? // null),
+    feels: (.current_condition[0].FeelsLikeC | tonumber? // null),
+    desc: ((.current_condition[0].lang_fr[0].value // .current_condition[0].weatherDesc[0].value // "") | s(60)),
+    code: (.current_condition[0].weatherCode | tonumber? // 0),
+    humidity: (.current_condition[0].humidity | tonumber? // null),
+    wind: (.current_condition[0].windspeedKmph | tonumber? // null),
+    days: [.weather[0:3][] | {
+      date: (.date | s(10)),
+      min: (.mintempC | tonumber? // null),
+      max: (.maxtempC | tonumber? // null),
+      code: (.hourly[4].weatherCode | tonumber? // 0)
+    }]
+  }' 2>/dev/null

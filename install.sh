@@ -10,7 +10,7 @@ source "$DOTFILES_DIR/lib/common.sh"
 # id|on or off by default|menu label (no commas: gum splits its selection on them)
 ITEMS=(
   "hyde-themes|on|Thèmes de la galerie HyDE convertis pour Omarchy (commande hyde-theme)"
-  "theme|on|Thème Black_arch (et Hermarchy installé) avec un fond d'écran en plus"
+  "theme|on|Thème HyDE Obsidian Purple (Black_arch et Hermarchy installés aussi, à choisir dans le menu)"
   "browser-brave|on|Brave navigateur par défaut · les liens s'ouvrent dans le Brave déjà ouvert"
   "zsh|on|zsh par défaut · suggestions et coloration syntaxique"
   "zsh-p10k|on|zsh · prompt Powerlevel10k (son assistant fait choisir le style · sinon starship d'Omarchy)"
@@ -47,6 +47,11 @@ ITEMS=(
   "airpods|on|Barre · AirPods (batterie · réduction de bruit · détection d'oreille) avec le démon airpods-tui"
   "whichport|off|Barre · whichport et les serveurs de dev qui tournent (compilé depuis GitHub)"
   "bar-layout|on|Barre · transparente · langue avant l'horloge et icônes d'applis après le réseau"
+  "control-center|on|Barre · Gestionnaire (Wi-Fi · Bluetooth · AirPods · VPN · luminosité · échelle · redimensionner) et groupe Applications toujours visible · remplace les icônes et le tiroir d'Omarchy"
+  "privacy-indicator|on|Barre · point orange quand le micro enregistre · vert quand la caméra est utilisée (comme macOS)"
+  "audio-visualizer|on|Barre · barres qui bougent avec la musique (cava) · seulement pendant la lecture"
+  "pomodoro|on|Barre · minuteur Pomodoro seul (sans dashboard) 25/5 min · clic démarrer/pause · clic droit arrêter"
+  "dashboard|on|Barre · horloge avec tableau de bord au survol · calendrier · météo · fuseaux · pomodoro · performances"
   "interstellar-bar|on|Barre et notifications aux couleurs Interstellar · VPN / IP locale / IP publique · titre de la fenêtre"
   "no-fcitx|on|Sans fcitx5 · Maj+flèches et touches mortes (^ ¨) fiables dans Ghostty"
   "ligatures|on|AltGr+O → œ au lieu de ø · AltGr+A → æ (avec Maj : Œ Æ)"
@@ -70,7 +75,7 @@ ITEMS=(
 )
 
 # Modules in the order they run. Each one reads `selected <id>` for its items.
-MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle builtin-mic session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display guide)
+MODULES=(git-ssh theme browser zsh ghostty hyprland power-profile adaptive-refresh touchpad-reset zoom-guard screensaver idle builtin-mic session plymouth sudo-notify sudo-prompt omarchy-plugins interstellar-bar airpods whichport input-method lockscreen-layout lockscreen-info neovim rust asm apps ssh-server display control-center guide)
 
 # Modules that run even when only some items are asked for (cheap, and they
 # keep the guide in step with the repo)
@@ -270,6 +275,11 @@ fi
 for module in "${RUN_MODULES[@]}"; do
   "module_${module//-/_}"
 done
+
+# One restart of the shell for every plugin whose code changed (install_plugin)
+if ((${RESTART_SHELL:-0})) && is_live; then
+  omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré (une fois, pour les plugins mis à jour)" || true
+fi
 
 mkdir -p "$(dirname "$SELECTION_FILE")"
 [[ -n $link_choice ]] && echo "$link_choice" >"$MODE_FILE"

@@ -1,5 +1,5 @@
 # Omarchy shell plugins and bar layout.
-# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout
+# Items: clipboard (history with pins + bar button), emojis, scale-button, resize-mode (its bar indicator), sysstats, bar-layout, privacy-indicator, audio-visualizer, pomodoro, dashboard
 
 # install_plugin ID [placement...]: copy the plugin, then enable it. A plugin
 # the shell keeps loaded (the clipboard picker) only picks up new code after
@@ -12,14 +12,15 @@ install_plugin() {
   [[ -d $dest ]] && ! diff -rq "$src" "$dest" >/dev/null 2>&1 && changed=1
   install_dir "$src" "$dest"
   enable_plugin "$id" "$@"
-  if ((changed)) && grep -q '"keepLoaded": true' "$src/manifest.json"; then
-    RESTART_SHELL=1
-  fi
+  # The shell's own reload of a changed plugin can keep the old code (QML
+  # cache): install.sh restarts it once, at the very end, when a plugin changed
+  ((changed)) && RESTART_SHELL=1
+  return 0
 }
 
 module_omarchy_plugins() {
   local any=0 item
-  for item in clipboard emojis scale-button resize-mode sysstats bar-layout; do selected "$item" && any=1; done
+  for item in clipboard emojis scale-button resize-mode sysstats bar-layout privacy-indicator audio-visualizer pomodoro dashboard; do selected "$item" && any=1; done
   ((any)) && info "Barre et plugins Omarchy"
 
   # Each new widget goes first in the right section: the order ends up
@@ -28,6 +29,51 @@ module_omarchy_plugins() {
     install_plugin dotfiles.sysstats --section right --index 0
   else
     disable_plugin dotfiles.sysstats
+  fi
+
+  # Orange (microphone) / green (camera) dot, first on the right like macOS
+  if selected privacy-indicator; then
+    install_plugin dotfiles.privacy --section right --index 0
+  else
+    disable_plugin dotfiles.privacy
+  fi
+
+  # Bars moving with the music, next to the volume
+  if selected audio-visualizer; then
+    pkg_add cava
+    install_plugin dotfiles.visualizer --before omarchy.audio
+  else
+    disable_plugin dotfiles.visualizer
+  fi
+
+  # The clock with its dashboard (calendar, weather, world clocks, pomodoro,
+  # performances) takes the clock's place; what it holds leaves the bar
+  if selected dashboard; then
+    install_plugin dotfiles.dashboard --before omarchy.clock
+    if is_live && [[ -f $HOME/.config/omarchy/shell.json ]]; then
+      local shell_json=$HOME/.config/omarchy/shell.json tmp
+      tmp=$(mktemp)
+      jq '.bar.layout |= map_values(map(select(.id as $id | ["omarchy.clock", "omarchy.weather", "omarchy.elsewhen", "omarchy.indicators", "dotfiles.pomodoro"] | index($id) | not)))' \
+        "$shell_json" >"$tmp"
+      if ! cmp -s "$tmp" "$shell_json"; then
+        backup "$shell_json"
+        cat "$tmp" >"$shell_json"
+        ok "horloge, météo, fuseaux, raccourcis et pomodoro rangés dans le tableau de bord"
+      fi
+      rm -f "$tmp"
+    fi
+  else
+    if is_live && omarchy plugin list --json 2>/dev/null | jq -e 'any(.[]; .id == "dotfiles.dashboard" and .enabled)' >/dev/null; then
+      omarchy bar put omarchy.clock --section center >/dev/null 2>&1 || true
+    fi
+    disable_plugin dotfiles.dashboard
+  fi
+
+  # Pomodoro timer next to the clock, unless the dashboard already has it
+  if selected pomodoro && ! selected dashboard; then
+    install_plugin dotfiles.pomodoro --section centerEnd --index 0
+  else
+    disable_plugin dotfiles.pomodoro
   fi
 
   if selected clipboard; then
@@ -45,14 +91,15 @@ module_omarchy_plugins() {
   fi
 
   # Goes first too: whichport, scale, clipboard, sysstats
-  if selected scale-button; then
+  # In the Gestionnaire instead when control-center is on
+  if selected scale-button && ! selected control-center; then
     install_plugin dotfiles.display-scale --section right --index 0
   else
     disable_plugin dotfiles.display-scale
   fi
 
   # Goes first too: whichport, resize, scale, clipboard, sysstats
-  if selected resize-mode; then
+  if selected resize-mode && ! selected control-center; then
     install_plugin dotfiles.resize-mode --section right --index 0
   else
     disable_plugin dotfiles.resize-mode
@@ -67,18 +114,24 @@ module_omarchy_plugins() {
   fi
 
   if selected bar-layout && is_live; then
-    omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
-    omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
+    # Each write of shell.json rebuilds the bar: move only what isn't in place
+    local layout_before
+    layout_before=$(jq -c '.bar' "$HOME/.config/omarchy/shell.json" 2>/dev/null)
+    if jq -e '[.bar.layout[][]?.id] | (index("omarchy.keyboard-layout") != null) and (index("omarchy.clock") != null) and (index("omarchy.keyboard-layout") + 1 != index("omarchy.clock"))' "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1; then
+      omarchy bar move omarchy.keyboard-layout --before omarchy.clock >/dev/null 2>&1 || true
+    fi
+    # Only while the network icon is in the bar itself: with bar-drawer it is
+    # inside the tray's drawer, and the tray can't go after its own content
+    if jq -e 'any(.bar.layout.right[]?; .id == "omarchy.network")' "$HOME/.config/omarchy/shell.json" >/dev/null 2>&1; then
+      omarchy bar move omarchy.tray --after omarchy.network >/dev/null 2>&1 || true
+    fi
     # interstellar-bar wants the bar opaque
-    if selected interstellar-bar; then
-      ok "disposition de la barre"
-    else
+    if ! selected interstellar-bar && [[ $(jq -r '.bar.background // ""' "$HOME/.config/omarchy/shell.json" 2>/dev/null) != none ]]; then
       omarchy bar transparent true >/dev/null 2>&1 || true
-      ok "disposition de la barre (transparente)"
+    fi
+    if [[ $(jq -c '.bar' "$HOME/.config/omarchy/shell.json" 2>/dev/null) != "$layout_before" ]]; then
+      ok "disposition de la barre"
     fi
   fi
 
-  if ((${RESTART_SHELL:-0})) && is_live; then
-    omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré" || true
-  fi
 }

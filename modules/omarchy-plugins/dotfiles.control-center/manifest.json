@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.control-center",
+  "name": "Gestionnaire",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "Wi-Fi, Bluetooth, AirPods, VPN, brightness, scale and resize in one card",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Gestionnaire",
+    "description": "Wi-Fi, Bluetooth, AirPods, VPN, brightness, scale and resize in one card",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

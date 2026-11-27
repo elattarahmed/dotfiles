@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.visualizer",
+  "name": "Audio visualizer",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "Bars moving with the music (cava), only while something plays",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Audio visualizer",
+    "description": "Bars moving with the music (cava), only while something plays",
+    "category": "Media",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

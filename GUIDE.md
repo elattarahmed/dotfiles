@@ -318,7 +318,27 @@ Une notification « Session rouverte » s'affiche quand c'est fini.
 
 ---
 
-## 9. Le reste
+## 9. La barre : qui est qui
+
+Les noms à utiliser pour parler de chaque élément, de gauche à droite (chacun est un élément de `./install.sh`, entre parenthèses).
+
+| Nom | Où | Ce que c'est |
+|---|---|---|
+| **Tableau de bord** (`dashboard`) | au centre : la date et l'heure | survol ou clic : onglet **Aperçu** (calendrier, météo, fuseaux, pomodoro), onglet **Raccourcis** (modes : ne pas déranger, veilleuse, rester éveillé, sudo sans mot de passe, animations, espaces entre fenêtres, pavé tactile ; capture : écran, enregistrement, OCR, QR code, pipette ; système : rappels, fond d'écran suivant, économiseur, verrouiller) et onglet **Performances** (processeur, mémoire, température, batterie, disque, réseau). Clic droit : démarrer / mettre en pause le pomodoro |
+| **Indicateur de confidentialité** (`privacy-indicator`) | début de la partie droite, seulement quand il sert | point orange : une appli enregistre le micro ; vert : la caméra |
+| **Presse-papiers** (`clipboard`) | à droite | l'historique (Alt+Maj+V) |
+| **IP** (`interstellar-bar`) | à droite | l'IP publique ; au survol, le pays et l'IP locale ; clic / clic droit : copier |
+| **Stats** (`sysstats`) | à droite | RAM, CPU ou température (clic pour changer) |
+| **Applications** (`control-center`) | à droite, groupe d'icônes | les applis ouvertes (Discord, VLC…) ; clic : l'appli, clic droit : son menu. Juste après : les **agents** (Claude) |
+| **Visualiseur** (`audio-visualizer`) | à droite, barres qui bougent, seulement quand de la musique joue | survol ou clic : la carte **Musique** (pochette, progression, ⏮ ⏯ ⏭, choix du lecteur) |
+| **Batterie** | à droite | celle d'Omarchy |
+| **Gestionnaire** (`control-center`) | juste après la batterie, icône de réglages (plus son coupé, Bluetooth, VPN, Wi-Fi coupé quand c'est le cas) | survol ou clic : tuiles Wi-Fi / Bluetooth / VPN / redimensionner, ce qui est **connecté**, son (sortie), micro (entrée), luminosité, échelle, réseaux et appareils |
+
+Les cartes (Tableau de bord, Gestionnaire, Musique) ont leur nom écrit en haut à gauche. Les boutons ont leur nom au survol, s'enfoncent au clic et se remplissent de couleur quand ils sont actifs.
+
+---
+
+## 10. Le reste
 
 - Thème complet du bureau (terminal, barre, verrouillage, fond…) : `Super+Ctrl+T`, ou menu **Appearance → Theme**.
 - Tous les raccourcis clavier : `Super+K`.

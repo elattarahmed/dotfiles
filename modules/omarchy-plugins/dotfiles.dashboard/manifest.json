@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.dashboard",
+  "name": "Dashboard",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "Clock with a dashboard: calendar, weather, world clocks, pomodoro, performances",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Dashboard",
+    "description": "Clock with a dashboard: calendar, weather, world clocks, pomodoro, performances",
+    "category": "Time",
+    "allowMultiple": false,
+    "defaultSection": "center",
+    "defaults": { "format": "ddd d MMM  HH:mm", "work": 25, "shortBreak": 5, "longBreak": 15, "longEvery": 4 }
+  }
+}

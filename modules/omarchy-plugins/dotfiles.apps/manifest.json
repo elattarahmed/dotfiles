@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "dotfiles.apps",
+  "name": "Applications",
+  "version": "1.0.0",
+  "author": "dotfiles",
+  "description": "The apps' tray icons, always shown in a row (no drawer)",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Applications",
+    "description": "The apps' tray icons, always shown in a row (no drawer)",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

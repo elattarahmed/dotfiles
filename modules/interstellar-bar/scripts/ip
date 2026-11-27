@@ -1,0 +1,48 @@
+#!/bin/bash
+# Bar module: the public IPv4 address (api.ipify.org), with its country
+# (ipapi.co) and the local address in the tooltip.
+#   --copy        put the public address in the clipboard
+#   --copy-local  put the local address in the clipboard
+# The public address is asked again every 5 minutes, or at once when the
+# local one changes (another network). Unreachable is marked "active" so the
+# bar shows it in its attention color.
+
+cache="${XDG_RUNTIME_DIR:-/tmp}/interstellar-ip"
+
+read -r local iface < <(ip -4 -o route get 1.1.1.1 2>/dev/null |
+  awk '{for (i = 1; i < NF; i++) {if ($i == "src") s = $(i + 1); if ($i == "dev") d = $(i + 1)}} END {print s, d}')
+
+cached_local='' pubip='' country='' stamp=0
+[[ -f $cache ]] && IFS=$'\t' read -r stamp cached_local pubip country <"$cache"
+now=$(date +%s)
+if [[ $cached_local != "$local" || -z $pubip ]] || ((now - ${stamp:-0} > 300)); then
+  fresh=$(curl -s --max-time 4 https://api.ipify.org 2>/dev/null)
+  [[ $fresh =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || fresh=''
+  if [[ -n $fresh && $fresh != "$pubip" ]]; then
+    # ipapi.co rate-limits shared addresses: ask only when the address changes,
+    # and keep only an answer that looks like a country name
+    country=$(curl -s --max-time 4 "https://ipapi.co/$fresh/country_name/" 2>/dev/null)
+    [[ $country =~ ^[[:alpha:]][[:alpha:]\ .,\'()-]{0,59}$ ]] || country=''
+  fi
+  pubip=$fresh
+  printf '%s\t%s\t%s\t%s\n' "$now" "$local" "$pubip" "$country" >"$cache"
+fi
+
+case ${1:-} in
+  --copy)
+    [[ -n $pubip ]] && printf '%s' "$pubip" | wl-copy && notify-send "IP publique copiée" "$pubip"
+    exit 0 ;;
+  --copy-local)
+    [[ -n $local ]] && printf '%s' "$local" | wl-copy && notify-send "IP locale copiée" "$local"
+    exit 0 ;;
+esac
+
+tooltip="IP publique : ${pubip:-injoignable}${country:+ ($country)}
+IP locale : ${local:-aucune}${iface:+ ($iface)}
+clic : copier la publique · clic droit : la locale"
+
+if [[ -n $pubip ]]; then
+  jq -cn --arg ip "$pubip" --arg tip "$tooltip" '{text: "󰖩 \($ip)", tooltip: $tip}'
+else
+  jq -cn --arg tip "$tooltip" '{text: "󰖪 --", tooltip: $tip, class: "active"}'
+fi

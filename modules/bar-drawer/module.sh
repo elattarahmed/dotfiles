@@ -1,5 +1,5 @@
 # Connection and display widgets in the tray's drawer instead of the bar:
-# Wi-Fi, Bluetooth, AirPods, VPN, local and public IP, screen scale and
+# Wi-Fi, Bluetooth, AirPods, VPN, screen scale and
 # brightness hide behind the tray's arrow and slide out when it is hovered
 # (Omarchy draws the bar's "tray" section in that drawer). Runs after the
 # modules that add those widgets (AirPods, interstellar-bar), so a new
@@ -7,8 +7,7 @@
 # Item: bar-drawer
 
 BAR_DRAWER_IDS=(omarchy.network omarchy.bluetooth io.github.sotoaugusto.airpods
-  interstellar-vpn interstellar-local-ip interstellar-public-ip
-  dotfiles.display-scale omarchy.monitor)
+  interstellar-vpn dotfiles.display-scale omarchy.monitor)
 
 # bar_section ID: the bar section the widget is in (empty if not in the bar)
 bar_section() {

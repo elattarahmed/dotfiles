@@ -27,8 +27,13 @@ module_control_center() {
     info "Gestionnaire et Applications"
     install_plugin dotfiles.control-center --before omarchy.power
     install_plugin dotfiles.apps --before omarchy.agents
-    # A frame around each group (drawn behind them, from the first place)
-    install_plugin dotfiles.bar-groups --section right --index 0
+    # A frame around each group (drawn behind them, from the first place);
+    # an item of its own, to turn off without losing the grouping
+    if selected bar-groups; then
+      install_plugin dotfiles.bar-groups --section right --index 0
+    else
+      disable_plugin dotfiles.bar-groups
+    fi
     is_live && [[ -f $shell_json ]] || return 0
     # One write (each change of shell.json rebuilds the bar): the icons the
     # Gestionnaire replaces go, then the right side is ordered by role (bar-order.jq)

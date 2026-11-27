@@ -36,6 +36,15 @@ module_control_center() {
       ok "icônes de connexion et tiroir retirés de la barre (dans le Gestionnaire)"
     fi
     rm -f "$tmp"
+    # The right side ordered by role, groups apart (bar-order.jq)
+    tmp=$(mktemp)
+    jq -f "$DOTFILES_DIR/modules/control-center/bar-order.jq" "$shell_json" >"$tmp"
+    if [[ -s $tmp ]] && ! cmp -s "$tmp" "$shell_json"; then
+      backup "$shell_json"
+      cat "$tmp" >"$shell_json"
+      ok "barre rangée par groupes : applications · outils · musique · réseau · système · confidentialité"
+    fi
+    rm -f "$tmp"
     # Keep the AirPods plugin (its state feeds the card), out of sight
     if cc_in_layout "$CC_AIRPODS" && [[ $(cc_section "$CC_AIRPODS") != tray ]]; then
       omarchy bar move "$CC_AIRPODS" --section tray >/dev/null 2>&1 && ok "icône AirPods masquée (le Gestionnaire l'affiche)"

@@ -1,10 +1,13 @@
 #!/bin/bash
 # The dashboard's weather, from wttr.in in French, as one small JSON line:
 # place, now (°C, feels like, description, code, humidity, wind) and three
-# days (date, min, max, midday code). Uses the location stored for Omarchy's
-# weather widget (omarchy-weather-location), else wttr.in's IP guess.
+# days (date, min, max, midday code). The place: the one given as $1 (the
+# dashboard's "location" setting), else the one stored for Omarchy's weather
+# widget (omarchy-weather-location), else wttr.in's IP guess.
 query=""
-if [[ -s $HOME/.local/state/omarchy/settings/weather.json ]] && command -v omarchy-weather-location >/dev/null; then
+if [[ -n ${1:-} ]]; then
+  query=$(jq -rn --arg l "$1" '$l | @uri')
+elif [[ -s $HOME/.local/state/omarchy/settings/weather.json ]] && command -v omarchy-weather-location >/dev/null; then
   location=$(omarchy-weather-location 2>/dev/null)
   [[ -n $location ]] && query=$(jq -rn --arg l "$location" '$l | @uri')
 fi

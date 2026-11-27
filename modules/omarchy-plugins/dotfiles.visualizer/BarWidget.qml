@@ -52,7 +52,7 @@ BarWidget {
   property bool pinned: false
   function close() { pinned = false; hoverOpen = false }
 
-  visible: player !== null
+  visible: player !== null && (playing || linger.running || pinned || hoverOpen)
   implicitWidth: visible ? barCount * barWidth + (barCount - 1) * barGap + Style.spaceReal(14) : 0
   implicitHeight: barSize
 
@@ -66,6 +66,17 @@ BarWidget {
 
   // Stays a bit after a pause so a quick pause doesn't restart cava
   Timer { id: linger; interval: 3000 }
+
+  function clock(s) {
+    s = Math.max(0, Math.floor(Number(s) || 0))
+    var m = Math.floor(s / 60), r = s % 60
+    return m + ":" + (r < 10 ? "0" : "") + r
+  }
+  Timer {
+    interval: 1000; repeat: true
+    running: (root.pinned || root.hoverOpen) && root.playing
+    onTriggered: if (root.player) root.player.positionChanged()
+  }
   onPlayingChanged: if (!playing) linger.restart()
 
   Process {
@@ -120,7 +131,7 @@ BarWidget {
 
   Timer {
     id: openDelay
-    interval: 300
+    interval: 500
     onTriggered: if (hover.containsMouse) root.hoverOpen = true
   }
   Timer {
@@ -163,6 +174,15 @@ BarWidget {
       id: column
       anchors.fill: parent
       spacing: Style.space(10)
+
+      Text {
+        textFormat: Text.PlainText
+        text: "Musique"
+        color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.6)
+        font.family: root.bar.fontFamily
+        font.pixelSize: Style.font.bodySmall
+        font.bold: true
+      }
 
       Row {
         spacing: Style.space(10)
@@ -231,6 +251,31 @@ BarWidget {
             width: parent.width
             visible: text !== ""
           }
+        }
+      }
+
+      // Where the track is
+      Column {
+        width: parent.width
+        spacing: Style.space(4)
+        visible: !!root.player && root.player.lengthSupported && root.player.length > 0
+        Rectangle {
+          width: parent.width
+          height: Style.space(4)
+          radius: height / 2
+          color: Qt.rgba(root.bar.foreground.r, root.bar.foreground.g, root.bar.foreground.b, 0.15)
+          Rectangle {
+            height: parent.height
+            radius: parent.radius
+            color: Commons.Color.accent
+            width: root.player && root.player.length > 0 ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
+          }
+        }
+        Item {
+          width: parent.width
+          height: elapsed.implicitHeight
+          Text { id: elapsed; textFormat: Text.PlainText; text: root.player ? root.clock(root.player.position) : ""; color: root.bar.foreground; opacity: 0.6; font.family: root.bar.fontFamily; font.pixelSize: Style.font.caption }
+          Text { anchors.right: parent.right; textFormat: Text.PlainText; text: root.player ? root.clock(root.player.length) : ""; color: root.bar.foreground; opacity: 0.6; font.family: root.bar.fontFamily; font.pixelSize: Style.font.caption }
         }
       }
 

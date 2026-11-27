@@ -109,7 +109,9 @@ BarWidget {
   function plain(s, n) { s = String(s === undefined || s === null ? "" : s); return s.length > n ? s.slice(0, n) : s }
   Process {
     id: weatherProc
-    command: [String(Qt.resolvedUrl("weather-fetch")).replace(/^file:\/\//, "")]
+    // The "location" setting (a city), checked before it reaches the script
+    readonly property string place: { var l = String(root.setting("location", "")); return /^[\p{L}0-9 ,.'-]{1,60}$/u.test(l) ? l : "" }
+    command: [String(Qt.resolvedUrl("weather-fetch")).replace(/^file:\/\//, "")].concat(place ? [place] : [])
     stdout: StdioCollector {
       onStreamFinished: {
         try { var w = JSON.parse(text.trim()); if (w && w.days) { root.weather = w; root.weatherAt = Date.now() } } catch (e) {}
@@ -229,7 +231,7 @@ BarWidget {
     }
   }
 
-  Timer { id: openDelay; interval: 350; onTriggered: if (button.tooltipHovered) root.hoverOpen = true }
+  Timer { id: openDelay; interval: 500; onTriggered: if (button.tooltipHovered) root.hoverOpen = true }
   Timer { id: closeDelay; interval: 450; onTriggered: if (!button.tooltipHovered && !popup.containsMouse && !root.pinned) root.hoverOpen = false }
   Connections {
     target: button
@@ -248,6 +250,60 @@ BarWidget {
     font.family: Style.font.family
     font.pixelSize: Style.font.body
     elide: Text.ElideRight
+  }
+
+  // Hover area with a small title above it (no bar tooltip inside a popup)
+  component ToolTipArea: MouseArea {
+    id: tipArea
+    property string text: ""
+    hoverEnabled: true
+    cursorShape: Qt.PointingHandCursor
+    Rectangle {
+      visible: tipArea.containsMouse && tipArea.text !== ""
+      z: 10
+      anchors.bottom: parent.top
+      anchors.bottomMargin: Style.space(4)
+      anchors.horizontalCenter: parent.horizontalCenter
+      width: tipText.implicitWidth + Style.space(12)
+      height: tipText.implicitHeight + Style.space(6)
+      radius: Style.cornerRadius
+      color: Commons.Color.tooltip.background
+      Text {
+        id: tipText
+        anchors.centerIn: parent
+        textFormat: Text.PlainText
+        text: tipArea.text
+        color: Commons.Color.tooltip.text
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+      }
+    }
+  }
+
+  // An icon-only button, its title on hover; tinted while on (red for the
+  // ones that are risky to leave on: passwordless sudo, recording)
+  component IconAction: Rectangle {
+    id: ia
+    property string icon: ""
+    property string title: ""
+    property bool on: false
+    property bool danger: false
+    readonly property color tint: danger ? Commons.Color.urgent : Commons.Color.accent
+    signal activated()
+    width: Style.space(34)
+    height: Style.space(34)
+    radius: Style.cornerRadius
+    color: on ? Qt.rgba(tint.r, tint.g, tint.b, 0.32)
+              : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, iaMouse.containsMouse ? 0.14 : 0.06)
+    Text {
+      anchors.centerIn: parent
+      textFormat: Text.PlainText
+      text: ia.icon
+      color: ia.on && ia.danger ? Commons.Color.urgent : Commons.Color.foreground
+      font.family: Style.font.family
+      font.pixelSize: Style.font.body * 1.25
+    }
+    ToolTipArea { id: iaMouse; anchors.fill: parent; text: ia.title; onClicked: ia.activated() }
   }
 
   component Tile: Rectangle {
@@ -358,87 +414,82 @@ BarWidget {
       }
       }
 
-      // Quick toggles, on both tabs
-      Flow {
-        width: parent.width
-        spacing: Style.space(6)
-        Button {
-          iconText: "\u{f009b}"; text: "Ne pas déranger"; foreground: root.fg; selected: root.dnd
-          onClicked: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
+      // Quick toggles: icons only, their title on hover
+      Row {
+        spacing: Style.space(8)
+        IconAction {
+          icon: "\u{f009b}"; on: root.dnd
+          title: root.dnd ? "Ne pas déranger : activé" : "Ne pas déranger"
+          onActivated: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
         }
-        Button {
-          iconText: "\u{f050e}"; text: "Veilleuse"; foreground: root.fg; selected: root.nightlight
-          onClicked: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
+        IconAction {
+          icon: "\u{f050e}"; on: root.nightlight
+          title: root.nightlight ? "Veilleuse : activée" : "Veilleuse"
+          onActivated: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
         }
-        Button {
-          iconText: "\u{f0176}"; text: "Rester éveillé"; foreground: root.fg; selected: root.stayAwake
-          onClicked: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
+        IconAction {
+          icon: "\u{f0176}"; on: root.stayAwake
+          title: root.stayAwake ? "Reste éveillé : activé" : "Rester éveillé"
+          onActivated: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
         }
-        Button {
-          iconText: "\u{f07f5}"; text: "Sudo sans mot de passe"; foreground: root.sudoOpen ? Commons.Color.urgent : root.fg; selected: root.sudoOpen
-          tooltipText: root.sudoOpen ? "Actif : clic pour le couper" : "Ouvre un terminal pour l'activer"
-          onClicked: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
+        IconAction {
+          icon: "\u{f07f5}"; on: root.sudoOpen; danger: true
+          title: root.sudoOpen ? "Sudo sans mot de passe : actif (clic pour couper)" : "Sudo sans mot de passe (ouvre un terminal)"
+          onActivated: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
         }
-        Button {
-          iconText: "\u{f0ec2}"; text: root.recording ? "Arrêter l'enregistrement" : "Enregistrer l'écran"; foreground: root.recording ? Commons.Color.urgent : root.fg; selected: root.recording
-          onClicked: { root.run(root.recording ? "omarchy-capture-screenrecording --stop-recording" : "omarchy-menu toggle trigger.capture.screenrecord"); root.close() }
+        IconAction {
+          icon: "\u{f0ec2}"; on: root.recording; danger: true
+          title: root.recording ? "Arrêter l'enregistrement" : "Enregistrer l'écran"
+          onActivated: { root.run(root.recording ? "omarchy-capture-screenrecording --stop-recording" : "omarchy-menu toggle trigger.capture.screenrecord"); root.close() }
         }
-        Button {
-          iconText: "\u{f088c}"; text: root.reminders > 0 ? "Rappels (" + root.reminders + ")" : "Rappel"; foreground: root.fg; selected: root.reminders > 0
-          onClicked: { Quickshell.execDetached(root.reminders > 0 ? ["omarchy-reminder", "show"] : ["omarchy-reminder", "-i"]); root.close() }
+        IconAction {
+          icon: "\u{f088c}"; on: root.reminders > 0
+          title: root.reminders > 0 ? "Rappels (" + root.reminders + ")" : "Nouveau rappel"
+          onActivated: { Quickshell.execDetached(root.reminders > 0 ? ["omarchy-reminder", "show"] : ["omarchy-reminder", "-i"]); root.close() }
         }
-        Button {
+        IconAction {
           visible: root.remote
-          iconText: "\u{f08b9}"; text: "Session à distance"; foreground: Commons.Color.urgent; selected: true
+          icon: "\u{f08b9}"; on: true; danger: true; title: "Session à distance en cours"
         }
       }
 
       // ===== Aperçu =====
-      Row {
+      Column {
         visible: root.tab === "overview"
         width: parent.width
         spacing: Style.space(12)
-        readonly property real col: (width - spacing * 2) / 3
 
-        // --- Clock and calendar
-        Tile {
-          width: parent.col
-          height: overviewHeight.height
-          Column {
-            id: clockCol
-            anchors.fill: parent
-            anchors.margins: Style.space(12)
-            spacing: Style.space(4)
-            Label {
-              text: clock.date.toLocaleString(root.loc, "HH:mm")
-              font.pixelSize: Style.font.displayLarge * 1.6
-              font.weight: Font.Light
-            }
-            Label {
-              width: parent.width
-              text: { var s = clock.date.toLocaleString(root.loc, "dddd d MMMM yyyy"); return s.charAt(0).toUpperCase() + s.slice(1) }
-              color: root.soft
-            }
-            Item { width: 1; height: Style.space(6) }
+        Row {
+          width: parent.width
+          spacing: Style.space(12)
+          readonly property real half: (width - spacing) / 2
+          readonly property real tileHeight: Math.max(cal.implicitHeight, weatherCol.implicitHeight) + Style.space(24)
+
+          // --- Calendar (the time itself is in the bar)
+          Tile {
+            width: parent.half
+            height: parent.tileHeight
             // Month grid, Monday first, with the previous / next month
             Column {
               id: cal
-              width: parent.width
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.margins: Style.space(12)
               property int offset: 0
               readonly property var month: { var d = new Date(clock.date.getFullYear(), clock.date.getMonth() + offset, 1); return d }
               spacing: Style.space(4)
-              Row {
+              Item {
                 width: cal.width
-                Button { iconText: "\u{f0141}"; foreground: root.fg; onClicked: cal.offset -= 1 }
+                height: Style.space(28)
+                IconAction { anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; icon: "\u{f0141}"; title: "Mois précédent"; onActivated: cal.offset -= 1 }
                 Label {
-                  width: cal.width - Style.space(64)
-                  horizontalAlignment: Text.AlignHCenter
-                  anchors.verticalCenter: parent.verticalCenter
+                  anchors.centerIn: parent
                   text: { var s = cal.month.toLocaleDateString(root.loc, "MMMM yyyy"); return s.charAt(0).toUpperCase() + s.slice(1) }
                   font.bold: true
-                  MouseArea { anchors.fill: parent; onClicked: cal.offset = 0 }
+                  MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: cal.offset = 0 }
                 }
-                Button { iconText: "\u{f0142}"; foreground: root.fg; onClicked: cal.offset += 1 }
+                IconAction { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter; icon: "\u{f0142}"; title: "Mois suivant"; onActivated: cal.offset += 1 }
               }
               Grid {
                 columns: 7
@@ -457,7 +508,7 @@ BarWidget {
                     readonly property bool inMonth: day.getMonth() === cal.month.getMonth()
                     readonly property bool today: day.toDateString() === clock.date.toDateString()
                     width: parent.cell
-                    height: Style.space(22)
+                    height: Style.space(24)
                     Rectangle {
                       anchors.centerIn: parent
                       width: Math.min(parent.width, parent.height); height: width; radius: width / 2
@@ -466,7 +517,7 @@ BarWidget {
                     Label {
                       anchors.centerIn: parent
                       text: day.getDate()
-                      font.pixelSize: Style.font.caption
+                      font.pixelSize: Style.font.bodySmall
                       color: today ? Commons.Color.background : root.fg
                       opacity: inMonth ? 1 : 0.3
                     }
@@ -475,97 +526,107 @@ BarWidget {
               }
             }
           }
-        }
 
-        // --- Weather and world clocks
-        Tile {
-          width: parent.col
-          height: overviewHeight.height
-          Column {
-            anchors.fill: parent
-            anchors.margins: Style.space(12)
-            spacing: Style.space(6)
-            Row {
-              spacing: Style.space(10)
+          // --- Weather and world clocks
+          Tile {
+            width: parent.half
+            height: parent.tileHeight
+            Column {
+              id: weatherCol
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.margins: Style.space(12)
+              spacing: Style.space(6)
+              Row {
+                spacing: Style.space(10)
+                Label {
+                  text: root.weather ? root.weatherIcon(root.weather.code) : "\u{f0590}"
+                  font.pixelSize: Style.font.displayLarge * 1.4
+                  color: root.accent
+                }
+                Column {
+                  anchors.verticalCenter: parent.verticalCenter
+                  Label { text: root.weather && root.weather.temp !== null ? root.weather.temp + "°" : "--°"; font.pixelSize: Style.font.displayLarge }
+                  Label { text: root.weather ? root.plain(root.weather.desc, 40) : "Météo…"; color: root.soft; font.pixelSize: Style.font.bodySmall }
+                }
+              }
+              // Two short lines instead of one cut line
               Label {
-                text: root.weather ? root.weatherIcon(root.weather.code) : "\u{f0590}"
-                font.pixelSize: Style.font.displayLarge * 1.4
-                color: root.accent
-              }
-              Column {
-                anchors.verticalCenter: parent.verticalCenter
-                Label {
-                  text: root.weather && root.weather.temp !== null ? root.weather.temp + "°" : "--°"
-                  font.pixelSize: Style.font.displayLarge
-                }
-                Label {
-                  text: root.weather ? root.plain(root.weather.desc, 40) : "Météo…"
-                  color: root.soft
-                  font.pixelSize: Style.font.bodySmall
-                }
-              }
-            }
-            Label {
-              width: parent.width
-              visible: !!root.weather
-              text: root.weather ? root.plain(root.weather.place, 40) + " · ressenti " + root.weather.feels + "° · " + root.weather.humidity + " % · " + root.weather.wind + " km/h" : ""
-              color: root.soft
-              font.pixelSize: Style.font.caption
-            }
-            Repeater {
-              model: root.weather ? root.weather.days : []
-              Row {
-                required property var modelData
                 width: parent.width
-                Label {
-                  width: parent.width * 0.42
-                  text: { var d = new Date(String(modelData.date) + "T12:00:00"); var s = isNaN(d) ? "" : d.toLocaleDateString(root.loc, "ddd d"); return s.charAt(0).toUpperCase() + s.slice(1) }
-                  font.pixelSize: Style.font.bodySmall
-                }
-                Label { width: parent.width * 0.18; text: root.weatherIcon(modelData.code); color: root.accent }
-                Label { width: parent.width * 0.4; text: modelData.min + "° / " + modelData.max + "°"; horizontalAlignment: Text.AlignRight; font.pixelSize: Style.font.bodySmall }
+                visible: !!root.weather
+                text: root.weather ? "\u{f034e} " + root.plain(weatherProc.place || root.weather.place, 40) : ""
+                color: root.soft
+                font.pixelSize: Style.font.caption
               }
-            }
-            Rectangle { width: parent.width; height: 1; color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) }
-            Repeater {
-              model: root.cities
-              Row {
-                required property var modelData
+              Label {
                 width: parent.width
-                Label { width: parent.width * 0.65; text: root.plain(modelData.name, 24); color: root.soft; font.pixelSize: Style.font.bodySmall }
-                Label { width: parent.width * 0.35; text: root.cityTimes[modelData.zone] || "--:--"; horizontalAlignment: Text.AlignRight; font.pixelSize: Style.font.bodySmall }
+                visible: !!root.weather
+                text: root.weather ? "ressenti " + root.weather.feels + "° · " + root.weather.humidity + " % · " + root.weather.wind + " km/h" : ""
+                color: root.soft
+                font.pixelSize: Style.font.caption
+              }
+              Repeater {
+                model: root.weather ? root.weather.days : []
+                Row {
+                  required property var modelData
+                  width: parent.width
+                  Label {
+                    width: parent.width * 0.42
+                    text: { var d = new Date(String(modelData.date) + "T12:00:00"); var s = isNaN(d) ? "" : d.toLocaleDateString(root.loc, "ddd d"); return s.charAt(0).toUpperCase() + s.slice(1) }
+                    font.pixelSize: Style.font.bodySmall
+                  }
+                  Label { width: parent.width * 0.18; text: root.weatherIcon(modelData.code); color: root.accent }
+                  Label { width: parent.width * 0.4; text: modelData.min + "° / " + modelData.max + "°"; horizontalAlignment: Text.AlignRight; font.pixelSize: Style.font.bodySmall }
+                }
+              }
+              Rectangle { width: parent.width; height: 1; color: Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.12) }
+              Repeater {
+                model: root.cities
+                Row {
+                  required property var modelData
+                  width: parent.width
+                  Label { width: parent.width * 0.65; text: root.plain(modelData.name, 24); color: root.soft; font.pixelSize: Style.font.bodySmall }
+                  Label { width: parent.width * 0.35; text: root.cityTimes[modelData.zone] || "--:--"; horizontalAlignment: Text.AlignRight; font.pixelSize: Style.font.bodySmall }
+                }
               }
             }
           }
         }
 
-        // --- Pomodoro
+        // --- Pomodoro, as one compact strip
         Tile {
-          id: overviewHeight
-          width: parent.col
-          height: Math.max(Style.space(330), clockCol.implicitHeight + Style.space(24))
+          width: parent.width
+          height: Style.space(64)
+          Row {
+            id: pomoLeft
+            anchors.left: parent.left
+            anchors.leftMargin: Style.space(14)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(12)
+            Label { anchors.verticalCenter: parent.verticalCenter; text: "\u{f051b}"; color: root.accent; font.pixelSize: Style.font.iconLarge * 1.2 }
+            Column {
+              anchors.verticalCenter: parent.verticalCenter
+              Label {
+                text: root.phase === "idle" ? root.workMinutes + ":00" : root.fmt(root.secondsLeft)
+                font.pixelSize: Style.font.display
+                opacity: root.paused ? 0.5 : 1
+              }
+              Label {
+                text: root.phase === "idle" ? "Pomodoro · prêt" : (root.phase === "work" ? "Travail" : "Pause") + (root.paused ? " · en pause" : "")
+                color: root.soft
+                font.pixelSize: Style.font.caption
+              }
+            }
+          }
+          // Progress of the current phase, and the session dots under it
           Column {
-            anchors.fill: parent
-            anchors.margins: Style.space(12)
-            spacing: Style.space(10)
-            Label {
-              text: "\u{f051b}  Pomodoro"
-              color: root.soft
-              font.pixelSize: Style.font.bodySmall
-            }
-            Label {
-              anchors.horizontalCenter: parent.horizontalCenter
-              text: root.phase === "idle" ? root.workMinutes + ":00" : root.fmt(root.secondsLeft)
-              font.pixelSize: Style.font.displayLarge * 1.6
-              font.weight: Font.Light
-              opacity: root.paused ? 0.5 : 1
-            }
-            Label {
-              anchors.horizontalCenter: parent.horizontalCenter
-              text: root.phase === "idle" ? "Prêt" : (root.phase === "work" ? "Travail" : "Pause") + (root.paused ? " · en pause" : "")
-              color: root.soft
-            }
-            // Progress of the current phase
+            anchors.left: pomoLeft.right
+            anchors.leftMargin: Style.space(16)
+            anchors.right: pomoRight.left
+            anchors.rightMargin: Style.space(16)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(8)
             Rectangle {
               width: parent.width
               height: Style.space(4)
@@ -580,49 +641,33 @@ BarWidget {
               }
             }
             Row {
-              anchors.horizontalCenter: parent.horizontalCenter
-              spacing: Style.space(6)
-              Button {
-                iconText: root.phase === "idle" || root.paused ? "\u{f040a}" : "\u{f03e4}"
-                foreground: root.fg
-                iconSize: Style.font.iconLarge
-                tooltipText: root.phase === "idle" ? "Démarrer" : (root.paused ? "Reprendre" : "Pause")
-                onClicked: root.togglePomodoro()
-              }
-              Button {
-                iconText: "\u{f04ad}"; foreground: root.fg
-                enabled: root.phase !== "idle"; opacity: enabled ? 1 : 0.4
-                tooltipText: "Passer"
-                onClicked: root.skipPhase()
-              }
-              Button {
-                iconText: "\u{f04db}"; foreground: root.fg
-                enabled: root.phase !== "idle"; opacity: enabled ? 1 : 0.4
-                tooltipText: "Arrêter"
-                onClicked: root.stopPomodoro()
-              }
-            }
-            Row {
-              anchors.horizontalCenter: parent.horizontalCenter
-              spacing: Style.space(6)
-              visible: root.phase === "idle"
-              Button { iconText: "\u{f0374}"; foreground: root.fg; onClicked: root.workMinutes = Math.max(5, root.workMinutes - 5) }
-              Label { anchors.verticalCenter: parent.verticalCenter; text: root.workMinutes + " min"; color: root.soft }
-              Button { iconText: "\u{f0415}"; foreground: root.fg; onClicked: root.workMinutes = Math.min(90, root.workMinutes + 5) }
-            }
-            // One dot per session of the current set
-            Row {
-              anchors.horizontalCenter: parent.horizontalCenter
               spacing: Style.space(6)
               Repeater {
                 model: root.longEvery
                 Rectangle {
                   required property int index
-                  width: Style.space(8); height: width; radius: width / 2
+                  width: Style.space(7); height: width; radius: width / 2
                   color: index < root.sessions % root.longEvery ? root.accent : Qt.rgba(root.fg.r, root.fg.g, root.fg.b, 0.18)
                 }
               }
             }
+          }
+          Row {
+            id: pomoRight
+            anchors.right: parent.right
+            anchors.rightMargin: Style.space(12)
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: Style.space(6)
+            IconAction { visible: root.phase === "idle"; icon: "\u{f0374}"; title: "5 min de moins"; onActivated: root.workMinutes = Math.max(5, root.workMinutes - 5) }
+            IconAction { visible: root.phase === "idle"; icon: "\u{f0415}"; title: "5 min de plus"; onActivated: root.workMinutes = Math.min(90, root.workMinutes + 5) }
+            IconAction {
+              icon: root.phase === "idle" || root.paused ? "\u{f040a}" : "\u{f03e4}"
+              title: root.phase === "idle" ? "Démarrer" : (root.paused ? "Reprendre" : "Pause")
+              on: root.phase !== "idle" && !root.paused
+              onActivated: root.togglePomodoro()
+            }
+            IconAction { visible: root.phase !== "idle"; icon: "\u{f04ad}"; title: root.phase === "work" ? "Passer à la pause" : "Terminer la pause"; onActivated: root.skipPhase() }
+            IconAction { visible: root.phase !== "idle"; icon: "\u{f04db}"; title: "Arrêter"; onActivated: root.stopPomodoro() }
           }
         }
       }

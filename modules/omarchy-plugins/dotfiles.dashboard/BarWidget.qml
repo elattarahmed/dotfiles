@@ -176,15 +176,51 @@ BarWidget {
     onTriggered: { if (!perfProc.running) perfProc.running = true; root.updateCities() }
   }
 
+  // ---- Quick toggles (Omarchy's bar indicators, through the same services and
+  // commands they use) -------------------------------------------------------
+  readonly property var notifService: bar?.shell?.firstPartyServiceFor("omarchy.notifications")
+  readonly property var nightService: bar?.shell?.firstPartyServiceFor("omarchy.nightlight")
+  readonly property var idleService: bar?.shell?.firstPartyServiceFor("omarchy.idle")
+  readonly property var remoteService: bar?.shell?.firstPartyServiceFor("omarchy.remote-session")
+  readonly property bool dnd: notifService ? notifService.doNotDisturb === true : false
+  readonly property bool nightlight: nightService ? nightService.enabled === true : false
+  readonly property bool stayAwake: idleService ? idleService.stayAwake === true : false
+  readonly property bool remote: remoteService ? remoteService.active === true : false
+  property bool sudoOpen: false
+  property bool recording: false
+  property int reminders: 0
+
+  function run(cmd) { if (bar) bar.run(cmd) }
+  Process { id: sudoProc; command: ["omarchy-sudo-passwordless", "--active"]; onExited: function(code, status) { root.sudoOpen = code === 0 && status === 0 } }
+  Process { id: sudoOff; command: ["omarchy-sudo-passwordless", "--disable"]; onExited: sudoProc.running = true }
+  Process { id: recProc; command: ["omarchy-capture-screenrecording", "--status"]; onExited: function(code) { root.recording = code === 0 } }
+  Process {
+    id: remindProc
+    command: ["omarchy-reminder", "show", "--json"]
+    stdout: StdioCollector { onStreamFinished: { try { root.reminders = Number(JSON.parse(text).count || 0) } catch (e) { root.reminders = 0 } } }
+  }
+  function refreshToggles() {
+    if (!sudoProc.running) sudoProc.running = true
+    if (!recProc.running) recProc.running = true
+    if (!remindProc.running) remindProc.running = true
+  }
+  // Light polling so the bar shows a recording or open sudo even when closed
+  Timer { interval: root.dashOpen ? 2000 : 10000; repeat: true; running: true; triggeredOnStart: true; onTriggered: root.refreshToggles() }
+  readonly property string activeMarks:
+      (recording ? " \u{f0ec2}" : "") + (sudoOpen ? " \u{f07f5}" : "") + (stayAwake ? " \u{f0176}" : "")
+    + (dnd ? " \u{f009b}" : "") + (nightlight ? " \u{f050e}" : "") + (remote ? " \u{f08b9}" : "")
+
   // ---- Bar label ------------------------------------------------------------
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
+  // The bar's open-panel mark spans the whole label instead of 55 % of it
+  readonly property real openPanelIndicatorWidth: button.labelWidth
 
   WidgetButton {
     id: button
     anchors.fill: parent
     bar: root.bar
-    text: clock.date.toLocaleString(root.loc, root.barFormat)
+    text: clock.date.toLocaleString(root.loc, root.barFormat) + root.activeMarks
       + (root.phase === "idle" ? "" : (root.phase === "work" ? "   \u{f051f} " : "   \u{f0176} ") + root.fmt(root.secondsLeft) + (root.paused ? " \u{f03e4}" : ""))
     onPressed: function(b) {
       if (b === Qt.RightButton) { root.togglePomodoro(); return }
@@ -293,8 +329,22 @@ BarWidget {
       width: parent.width
       spacing: Style.space(12)
 
-      // Tabs
+      // Title (its name, to talk about it) and tabs
+      Item {
+        width: parent.width
+        height: tabs.implicitHeight
+        Text {
+          anchors.left: parent.left
+          anchors.verticalCenter: parent.verticalCenter
+          textFormat: Text.PlainText
+          text: "Tableau de bord"
+          color: root.soft
+          font.family: root.font
+          font.pixelSize: Style.font.bodySmall
+          font.bold: true
+        }
       Row {
+        id: tabs
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Style.space(6)
         Button {
@@ -304,6 +354,42 @@ BarWidget {
         Button {
           text: "\u{f04c5}  Performances"; foreground: root.fg; selected: root.tab === "perf"
           onClicked: { root.tab = "perf"; if (!perfProc.running) perfProc.running = true }
+        }
+      }
+      }
+
+      // Quick toggles, on both tabs
+      Flow {
+        width: parent.width
+        spacing: Style.space(6)
+        Button {
+          iconText: "\u{f009b}"; text: "Ne pas déranger"; foreground: root.fg; selected: root.dnd
+          onClicked: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
+        }
+        Button {
+          iconText: "\u{f050e}"; text: "Veilleuse"; foreground: root.fg; selected: root.nightlight
+          onClicked: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
+        }
+        Button {
+          iconText: "\u{f0176}"; text: "Rester éveillé"; foreground: root.fg; selected: root.stayAwake
+          onClicked: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
+        }
+        Button {
+          iconText: "\u{f07f5}"; text: "Sudo sans mot de passe"; foreground: root.sudoOpen ? Commons.Color.urgent : root.fg; selected: root.sudoOpen
+          tooltipText: root.sudoOpen ? "Actif : clic pour le couper" : "Ouvre un terminal pour l'activer"
+          onClicked: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
+        }
+        Button {
+          iconText: "\u{f0ec2}"; text: root.recording ? "Arrêter l'enregistrement" : "Enregistrer l'écran"; foreground: root.recording ? Commons.Color.urgent : root.fg; selected: root.recording
+          onClicked: { root.run(root.recording ? "omarchy-capture-screenrecording --stop-recording" : "omarchy-menu toggle trigger.capture.screenrecord"); root.close() }
+        }
+        Button {
+          iconText: "\u{f088c}"; text: root.reminders > 0 ? "Rappels (" + root.reminders + ")" : "Rappel"; foreground: root.fg; selected: root.reminders > 0
+          onClicked: { Quickshell.execDetached(root.reminders > 0 ? ["omarchy-reminder", "show"] : ["omarchy-reminder", "-i"]); root.close() }
+        }
+        Button {
+          visible: root.remote
+          iconText: "\u{f08b9}"; text: "Session à distance"; foreground: Commons.Color.urgent; selected: true
         }
       }
 

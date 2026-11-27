@@ -52,12 +52,12 @@ module_omarchy_plugins() {
     if is_live && [[ -f $HOME/.config/omarchy/shell.json ]]; then
       local shell_json=$HOME/.config/omarchy/shell.json tmp
       tmp=$(mktemp)
-      jq '.bar.layout |= map_values(map(select(.id as $id | ["omarchy.clock", "omarchy.weather", "omarchy.elsewhen", "dotfiles.pomodoro"] | index($id) | not)))' \
+      jq '.bar.layout |= map_values(map(select(.id as $id | ["omarchy.clock", "omarchy.weather", "omarchy.elsewhen", "omarchy.indicators", "dotfiles.pomodoro"] | index($id) | not)))' \
         "$shell_json" >"$tmp"
       if ! cmp -s "$tmp" "$shell_json"; then
         backup "$shell_json"
         cat "$tmp" >"$shell_json"
-        ok "horloge, météo, fuseaux et pomodoro rangés dans le tableau de bord"
+        ok "horloge, météo, fuseaux, raccourcis et pomodoro rangés dans le tableau de bord"
       fi
       rm -f "$tmp"
     fi

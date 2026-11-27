@@ -27,6 +27,8 @@ module_control_center() {
     info "Gestionnaire et Applications"
     install_plugin dotfiles.control-center --before omarchy.power
     install_plugin dotfiles.apps --before omarchy.agents
+    # A frame around each group (drawn behind them, from the first place)
+    install_plugin dotfiles.bar-groups --section right --index 0
     is_live && [[ -f $shell_json ]] || return 0
     # One write (each change of shell.json rebuilds the bar): the icons the
     # Gestionnaire replaces go, then the right side is ordered by role (bar-order.jq)
@@ -48,6 +50,7 @@ module_control_center() {
     info "Gestionnaire et Applications"
     disable_plugin dotfiles.control-center
     disable_plugin dotfiles.apps
+    disable_plugin dotfiles.bar-groups
     cc_in_layout omarchy.audio || omarchy bar put omarchy.audio --before omarchy.power >/dev/null 2>&1 || true
     for id in omarchy.tray omarchy.network omarchy.bluetooth omarchy.monitor; do
       cc_in_layout "$id" || omarchy bar put "$id" --before omarchy.audio >/dev/null 2>&1 || true

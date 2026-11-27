@@ -178,24 +178,56 @@ BarWidget {
     onTriggered: { if (!perfProc.running) perfProc.running = true; root.updateCities() }
   }
 
-  // ---- Quick toggles (Omarchy's bar indicators, through the same services and
-  // commands they use) -------------------------------------------------------
-  readonly property var notifService: bar?.shell?.firstPartyServiceFor("omarchy.notifications")
-  readonly property var nightService: bar?.shell?.firstPartyServiceFor("omarchy.nightlight")
-  readonly property var idleService: bar?.shell?.firstPartyServiceFor("omarchy.idle")
+  // ---- Quick toggles --------------------------------------------------------
+  // Omarchy hands its services (notifications, night light, idle) only to its
+  // own bar widgets: a plugin gets null. So every mode is read and switched
+  // through Omarchy's commands, the ones its keybindings run.
   readonly property var remoteService: bar?.shell?.firstPartyServiceFor("omarchy.remote-session")
-  readonly property bool dnd: notifService ? notifService.doNotDisturb === true : false
-  readonly property bool nightlight: nightService ? nightService.enabled === true : false
-  readonly property bool stayAwake: idleService ? idleService.stayAwake === true : false
   readonly property bool remote: remoteService ? remoteService.active === true : false
+  property bool dnd: false
+  property bool nightlight: false
+  property bool stayAwake: false
   property bool sudoOpen: false
+  // When passwordless sudo ends (ms since the epoch), 0 = no end (permanent)
+  property real sudoUntil: 0
+  property real now: Date.now()
   property bool animations: true
   property bool touchpad: true
   property bool recording: false
   property int reminders: 0
 
-  function run(cmd) { if (bar) bar.run(cmd) }
-  Process { id: sudoProc; command: ["omarchy-sudo-passwordless", "--active"]; onExited: function(code, status) { root.sudoOpen = code === 0 && status === 0 } }
+  // A click shows at once; the state read back can't undo it for a moment
+  // (the night light takes a second or two to start)
+  property var held: ({})
+  function hold(name, value, ms) {
+    var h = Object.assign({}, held)
+    h[name] = { value: value, until: Date.now() + ms }
+    held = h
+    root[name] = value
+  }
+  function apply(name, value) {
+    var h = held[name]
+    if (h && Date.now() < h.until) return
+    root[name] = value
+  }
+  function toggleMode(name, argv, ms) {
+    hold(name, !root[name], ms || 1500)
+    Quickshell.execDetached(argv)
+    refreshSoon.interval = (ms || 1500) + 200
+    refreshSoon.restart()
+  }
+
+  function sudoLeft() {
+    if (!sudoOpen) return ""
+    if (sudoUntil <= 0) return "∞"
+    var m = Math.max(0, Math.ceil((sudoUntil - now) / 60000))
+    return m < 60 ? m + " min" : Math.floor(m / 60) + " h " + (m % 60 < 10 ? "0" : "") + (m % 60)
+  }
+  function sudoEnd() {
+    return sudoUntil > 0 ? new Date(sudoUntil).toLocaleTimeString(Qt.locale(), "HH:mm") : ""
+  }
+
+  Process { id: sudoProc; command: ["omarchy-sudo-passwordless", "--active"]; onExited: function(code, status) { root.apply("sudoOpen", code === 0 && status === 0) } }
   Process { id: sudoOff; command: ["omarchy-sudo-passwordless", "--disable"]; onExited: sudoProc.running = true }
   Process { id: recProc; command: ["omarchy-capture-screenrecording", "--status"]; onExited: function(code) { root.recording = code === 0 } }
   Process {
@@ -205,18 +237,38 @@ BarWidget {
   }
   Process {
     id: modesProc
-    command: ["sh", "-c", "hyprctl getoption animations:enabled -j | jq -r .bool; [ -e \"$HOME/.local/state/omarchy/toggles/hypr/touchpad-disabled-name\" ] && echo off || echo on"]
+    command: ["sh", "-c",
+      "echo \"anim=$(hyprctl getoption animations:enabled -j 2>/dev/null | jq -r .bool)\";" +
+      "[ -e \"$HOME/.local/state/omarchy/toggles/hypr/touchpad-disabled-name\" ] && echo touchpad=off || echo touchpad=on;" +
+      "echo \"dnd=$(omarchy-shell notifications isDnd 2>/dev/null)\";" +
+      "echo \"night=$(omarchy-toggle-nightlight --status 2>/dev/null | jq -r .enabled)\";" +
+      "[ -f \"$HOME/.local/state/omarchy/indicators/stay-awake\" ] && echo awake=on || echo awake=off;" +
+      "echo \"sudo=$(systemctl list-timers --all --output=json 'omarchy-nopasswd-expire-*' 2>/dev/null | jq -r 'map(.next) | max // empty')\""]
     stdout: StdioCollector {
-      onStreamFinished: { var l = text.trim().split("\n"); root.animations = l[0] !== "false"; root.touchpad = l[1] !== "off" }
+      onStreamFinished: {
+        var v = {}
+        text.split("\n").forEach(function(line) { var i = line.indexOf("="); if (i > 0) v[line.slice(0, i)] = line.slice(i + 1).trim() })
+        root.apply("animations", v.anim !== "false")
+        root.apply("touchpad", v.touchpad !== "off")
+        root.apply("dnd", v.dnd === "on")
+        root.apply("nightlight", v.night === "true")
+        root.apply("stayAwake", v.awake === "on")
+        // systemd gives microseconds
+        var us = Number(v.sudo)
+        root.sudoUntil = isFinite(us) && us > 0 ? us / 1000 : 0
+        root.now = Date.now()
+      }
     }
   }
   // Runs a shortcut; a capture (closeFirst) waits for the card to be gone
   // so it isn't in the picture
   property var pendingArgv: null
+  property bool touchpadConfirm: false
+  Timer { id: confirmTimeout; interval: 10000; onTriggered: root.touchpadConfirm = false }
   Timer { id: laterTimer; interval: 350; onTriggered: { if (root.pendingArgv) Quickshell.execDetached(root.pendingArgv); root.pendingArgv = null; root.refreshToggles() } }
   function later(argv, closeFirst) {
     if (closeFirst) { close(); pendingArgv = argv; laterTimer.restart() }
-    else { Quickshell.execDetached(argv); refreshSoon.restart() }
+    else { Quickshell.execDetached(argv); refreshSoon.interval = 400; refreshSoon.restart() }
   }
   Timer { id: refreshSoon; interval: 400; onTriggered: root.refreshToggles() }
   function refreshToggles() {
@@ -357,12 +409,17 @@ BarWidget {
     property string title: ""
     property bool on: false
     property bool danger: false
+    property string badge: ""
+    // Waiting for a confirmation: a red ring
+    property bool alert: false
     readonly property color tint: danger ? Commons.Color.urgent : Commons.Color.accent
     signal activated()
     width: Style.space(56)
     height: Style.space(56)
     radius: Style.cornerRadius + Style.space(4)
     color: on ? tint : Qt.rgba(Commons.Color.foreground.r, Commons.Color.foreground.g, Commons.Color.foreground.b, stMouse.containsMouse ? 0.14 : 0.08)
+    border.width: alert ? 2 : 0
+    border.color: Commons.Color.urgent
     Behavior on color { ColorAnimation { duration: Style.duration(150) } }
     scale: stMouse.pressed ? 0.9 : 1
     Behavior on scale { NumberAnimation { duration: Style.duration(90); easing.type: Easing.OutCubic } }
@@ -380,6 +437,28 @@ BarWidget {
       color: st.on ? Commons.Color.background : Commons.Color.foreground
       font.family: Style.font.family
       font.pixelSize: Style.font.iconLarge * 1.2
+    }
+    Rectangle {
+      visible: st.badge !== ""
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: -Style.space(6)
+      width: badgeText.implicitWidth + Style.space(10)
+      height: badgeText.implicitHeight + Style.space(2)
+      radius: height / 2
+      color: Commons.Color.background
+      border.width: 1
+      border.color: st.tint
+      Text {
+        id: badgeText
+        anchors.centerIn: parent
+        textFormat: Text.PlainText
+        text: st.badge
+        color: Commons.Color.foreground
+        font.family: Style.font.family
+        font.pixelSize: Style.font.caption
+        font.bold: true
+      }
     }
     ToolTipArea { id: stMouse; anchors.fill: parent; text: st.title; onClicked: st.activated() }
   }
@@ -727,23 +806,29 @@ BarWidget {
           spacing: Style.space(10)
           ShortcutTile {
             icon: "\u{f009b}"; on: root.dnd
-            title: root.dnd ? "Ne pas déranger : activé" : "Ne pas déranger"
-            onActivated: if (root.notifService) root.notifService.setDoNotDisturb(!root.dnd)
+            title: root.dnd ? "Ne pas déranger : activé (les notifications attendent)" : "Ne pas déranger : coupé"
+            onActivated: root.toggleMode("dnd", ["omarchy-toggle-notification-silencing"])
           }
           ShortcutTile {
             icon: "\u{f050e}"; on: root.nightlight
-            title: root.nightlight ? "Veilleuse : activée" : "Veilleuse"
-            onActivated: if (root.nightService) root.nightService.setNightlight(!root.nightlight)
+            title: root.nightlight ? "Veilleuse : activée (écran plus chaud, moins de bleu)" : "Veilleuse : écran plus chaud le soir, moins de bleu"
+            onActivated: root.toggleMode("nightlight", ["omarchy-toggle-nightlight"], 3000)
           }
           ShortcutTile {
             icon: "\u{f0176}"; on: root.stayAwake
-            title: root.stayAwake ? "Reste éveillé : activé" : "Rester éveillé"
-            onActivated: if (root.idleService) root.idleService.setIdleEnabled(root.stayAwake)
+            title: root.stayAwake ? "Reste éveillé : ni veille, ni verrouillage, ni économiseur" : "Rester éveillé : coupé (veille et verrouillage normaux)"
+            onActivated: root.toggleMode("stayAwake", ["omarchy-toggle-idle"])
           }
           ShortcutTile {
             icon: "\u{f0bc4}"; on: root.sudoOpen; danger: true
-            title: root.sudoOpen ? "Sudo sans mot de passe : actif (clic pour couper)" : "Sudo sans mot de passe (ouvre un terminal)"
-            onActivated: { if (root.sudoOpen) { if (!sudoOff.running) sudoOff.running = true } else root.run("omarchy-launch-floating-terminal-with-presentation omarchy-sudo-passwordless") }
+            badge: root.sudoLeft()
+            title: root.sudoOpen
+              ? (root.sudoUntil > 0 ? "Sudo sans mot de passe jusqu'à " + root.sudoEnd() + " (encore " + root.sudoLeft() + ") · clic pour couper" : "Sudo sans mot de passe : permanent · clic pour couper")
+              : "Sudo sans mot de passe : ouvre un terminal pour choisir la durée"
+            onActivated: {
+              if (root.sudoOpen) { root.hold("sudoOpen", false, 1500); if (!sudoOff.running) sudoOff.running = true }
+              else root.later(["omarchy-launch-floating-terminal-with-presentation", "omarchy-sudo-passwordless"], true)
+            }
           }
           ShortcutTile {
             icon: "\u{f093a}"; on: root.animations
@@ -757,8 +842,64 @@ BarWidget {
           }
           ShortcutTile {
             icon: root.touchpad ? "\u{f07f8}" : "\u{f0933}"; on: root.touchpad
-            title: root.touchpad ? "Pavé tactile : activé" : "Pavé tactile : coupé"
-            onActivated: root.later(["omarchy", "toggle", "touchpad"], false)
+            alert: root.touchpadConfirm
+            title: root.touchpad ? "Pavé tactile : activé (clic pour le couper, avec confirmation)" : "Pavé tactile : coupé · clic pour le réactiver"
+            // Turning it off asks first: from the touchpad itself, there is no way back
+            onActivated: {
+              if (!root.touchpad) { root.touchpadConfirm = false; root.toggleMode("touchpad", ["omarchy-toggle-touchpad", "on"]) }
+              else { root.touchpadConfirm = !root.touchpadConfirm; if (root.touchpadConfirm) confirmTimeout.restart() }
+            }
+          }
+        }
+
+        Rectangle {
+          visible: root.touchpadConfirm
+          width: parent.width
+          height: confirmRow.implicitHeight + Style.space(20)
+          radius: Style.cornerRadius + Style.space(2)
+          color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.14)
+          border.width: 1
+          border.color: Qt.rgba(Commons.Color.urgent.r, Commons.Color.urgent.g, Commons.Color.urgent.b, 0.5)
+          Item {
+            id: confirmRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: Style.space(12)
+            anchors.rightMargin: Style.space(12)
+            implicitHeight: Math.max(confirmText.implicitHeight, confirmButtons.implicitHeight)
+            Column {
+              id: confirmText
+              anchors.left: parent.left
+              anchors.right: confirmButtons.left
+              anchors.rightMargin: Style.space(12)
+              anchors.verticalCenter: parent.verticalCenter
+              spacing: Style.space(2)
+              Label { width: parent.width; text: "Couper le pavé tactile ?"; font.bold: true }
+              Label {
+                width: parent.width
+                wrapMode: Text.WordWrap
+                elide: Text.ElideNone
+                text: "Pour le réactiver : Super + Ctrl + Alt + I, ou une souris (Raccourcis → pavé tactile)."
+                color: root.soft
+                font.pixelSize: Style.font.bodySmall
+              }
+            }
+            Row {
+              id: confirmButtons
+              anchors.right: parent.right
+              anchors.verticalCenter: parent.verticalCenter
+              spacing: Style.space(6)
+              Button { text: "Annuler"; foreground: root.fg; onClicked: root.touchpadConfirm = false }
+              Button {
+                text: "Couper"; foreground: Commons.Color.urgent; selected: true
+                onClicked: {
+                  root.touchpadConfirm = false
+                  root.toggleMode("touchpad", ["omarchy-toggle-touchpad", "off"])
+                  Quickshell.execDetached(["notify-send", "-a", "Tableau de bord", "-i", "input-touchpad", "Pavé tactile coupé", "Super + Ctrl + Alt + I pour le réactiver"])
+                }
+              }
+            }
           }
         }
 

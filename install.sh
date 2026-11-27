@@ -278,7 +278,13 @@ done
 
 # One restart of the shell for every plugin whose code changed (install_plugin)
 if ((${RESTART_SHELL:-0})) && is_live; then
-  omarchy restart shell >/dev/null 2>&1 && ok "shell Omarchy redémarré (une fois, pour les plugins mis à jour)" || true
+  # Omarchy refuses while the session is locked: say so rather than keep the old code
+  if omarchy restart shell >/dev/null 2>&1; then
+    ok "shell Omarchy redémarré (une fois, pour les plugins mis à jour)"
+  else
+    warn "shell Omarchy pas redémarré (session verrouillée ?) : les plugins mis à jour gardent l'ancien code"
+    todo "Barre : lance omarchy restart shell pour charger les plugins mis à jour"
+  fi
 fi
 
 mkdir -p "$(dirname "$SELECTION_FILE")"
